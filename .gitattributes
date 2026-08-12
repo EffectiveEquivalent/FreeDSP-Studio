@@ -1,0 +1,8 @@
+# Normalise line endings to LF in the repo (keeps Windows and the coming macOS port consistent)
+* text=auto eol=lf
+
+# Treat these as binary (never touch line endings)
+*.woff2 binary
+*.png binary
+*.ico binary
+*.icns binary

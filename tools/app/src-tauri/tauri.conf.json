@@ -1,0 +1,39 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "FreeDSP Studio",
+  "version": "0.1.0",
+  "identifier": "com.freedsp.studio",
+  "build": {
+    "frontendDist": "../renderer"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "FreeDSP Studio",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 1000,
+        "minHeight": 700,
+        "resizable": true,
+        "decorations": false,
+        "center": true,
+        "backgroundColor": "#101216"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

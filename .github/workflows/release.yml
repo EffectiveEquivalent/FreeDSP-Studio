@@ -1,0 +1,51 @@
+name: Release
+
+# Build the portable Windows exe. Push a version tag (e.g. v0.1.0) to cut a
+# release; or run manually from the Actions tab to just get a build artifact.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: tools/app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools/app/src-tauri
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend tooling
+        run: npm ci
+
+      - name: Build portable exe
+        run: npx tauri build --no-bundle
+
+      - name: Stage artifact
+        run: Copy-Item "src-tauri/target/release/app.exe" "FreeDSP-Studio.exe"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FreeDSP-Studio-windows
+          path: tools/app/FreeDSP-Studio.exe
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: tools/app/FreeDSP-Studio.exe

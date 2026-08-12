@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FreeDSP Studio</title>
+<script>
+  // Set theme before first paint to avoid a flash of the wrong palette.
+  (function(){
+    try {
+      var t = localStorage.getItem('dsp-theme');
+      if (t !== 'light' && t !== 'dark') t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = t;
+    } catch(e){ document.documentElement.dataset.theme = 'dark'; }
+  })();
+</script>
+<style>
+  /* ---- Local fonts (no network dependency in the shipped app). Falls back to system fonts
+         gracefully if the woff2 files are not present in renderer/fonts/. ---- */
+  @font-face { font-family:'IBM Plex Sans'; font-weight:400; font-style:normal; font-display:swap; src:url('fonts/IBMPlexSans-Regular.woff2') format('woff2'); }
+  @font-face { font-family:'IBM Plex Sans'; font-weight:500; font-style:normal; font-display:swap; src:url('fonts/IBMPlexSans-Medium.woff2') format('woff2'); }
+  @font-face { font-family:'IBM Plex Sans'; font-weight:600; font-style:normal; font-display:swap; src:url('fonts/IBMPlexSans-SemiBold.woff2') format('woff2'); }
+  @font-face { font-family:'IBM Plex Sans'; font-weight:700; font-style:normal; font-display:swap; src:url('fonts/IBMPlexSans-Bold.woff2') format('woff2'); }
+  @font-face { font-family:'IBM Plex Mono'; font-weight:400; font-style:normal; font-display:swap; src:url('fonts/IBMPlexMono-Regular.woff2') format('woff2'); }
+  @font-face { font-family:'IBM Plex Mono'; font-weight:500; font-style:normal; font-display:swap; src:url('fonts/IBMPlexMono-Medium.woff2') format('woff2'); }
+  @font-face { font-family:'IBM Plex Mono'; font-weight:600; font-style:normal; font-display:swap; src:url('fonts/IBMPlexMono-SemiBold.woff2') format('woff2'); }
+
+  :root[data-theme="light"] {
+    --shell:#f1f2f4; --header-bg:#ffffff; --card:#ffffff; --line:#e4e4e7;
+    --ink:#18181b; --ink-2:#3f3f46; --muted:#71717a; --faint:#a1a1aa;
+    --accent:oklch(0.47 0.14 268); --accent-ink:#ffffff; --accent-fill:oklch(0.47 0.14 268 / 0.18);
+    --chip-bg:#f4f4f5; --row-bg:#fafafa; --track:#eeeef0; --btn-bg:#ffffff;
+    --grid-line:#f0f0f2; --grid-zero:#d4d4d8; --band-line:#dcdce0;
+    --node-dim:#e4e4e7; --node-dim-ink:#a1a1aa;
+    --pos:oklch(0.52 0.16 150); --warn:oklch(0.58 0.16 55);
+    --ok-bg:#f3f7fa; --warn-bg:#fdf6ec; --ok-dot:oklch(0.62 0.18 150); --danger:#ef4444;
+    --shadow-card:0 1px 2px rgba(0,0,0,.04),0 10px 30px rgba(0,0,0,.05);
+    --shadow-flat:0 1px 2px rgba(0,0,0,.04);
+    --shadow-node:0 2px 8px rgba(0,0,0,.2);
+    --shadow-accent:0 6px 18px oklch(0.47 0.14 268 / 0.25);
+  }
+  :root[data-theme="dark"] {
+    --shell:#101216; --header-bg:#15181d; --card:#1a1d23; --line:#272b33;
+    --ink:#e6e9ee; --ink-2:#c6ccd6; --muted:#8e96a3; --faint:#6b7480;
+    --accent:oklch(0.70 0.13 258); --accent-ink:#0c0e12; --accent-fill:oklch(0.70 0.13 258 / 0.18);
+    --chip-bg:#1f232a; --row-bg:#16191f; --track:#272b33; --btn-bg:#1a1d23;
+    --grid-line:#1b1f26; --grid-zero:#3a3f47; --band-line:#2c313a;
+    --node-dim:#272b33; --node-dim-ink:#6b7480;
+    --pos:oklch(0.75 0.14 155); --warn:oklch(0.78 0.14 70);
+    --ok-bg:#141b1a; --warn-bg:#221c12; --ok-dot:oklch(0.75 0.14 155); --danger:#ef4444;
+    --shadow-card:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    --shadow-flat:0 1px 2px rgba(0,0,0,.3);
+    --shadow-node:0 2px 8px rgba(0,0,0,.5);
+    --shadow-accent:0 6px 18px rgba(0,0,0,.45);
+  }
+
+  * { box-sizing:border-box; }
+  html,body { height:100%; }
+  body { margin:0; background:var(--shell); color:var(--ink); user-select:none; overflow:hidden;
+    font:14px/1.45 'IBM Plex Sans',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; }
+  .mono { font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace; }
+  .hidden { display:none !important; }
+  .muted { color:var(--muted); }
+
+  .shell { display:flex; flex-direction:column; height:100vh; border-radius:14px; overflow:hidden; }
+
+  /* ---- Title strip (frameless drag region) ---- */
+  .titlebar { height:56px; flex:none; display:flex; align-items:center; gap:14px; padding:0 20px;
+    background:var(--header-bg); border-bottom:1px solid var(--line); -webkit-app-region:drag; }
+  .mark { width:28px; height:28px; border-radius:8px; overflow:hidden; flex:none; display:block; }
+  .mark svg { width:100%; height:100%; display:block; }
+  .readnote { display:flex; align-items:flex-start; gap:10px; margin-bottom:2px; padding:9px 12px; border-radius:9px;
+    font:11.5px/1.45 'IBM Plex Mono',monospace; background:var(--chip-bg); color:var(--ink-2); border:1px solid var(--line); }
+  .readnote .rn-x { margin-left:auto; cursor:pointer; color:var(--muted); flex:none; }
+  .readnote .rn-x:hover { color:var(--accent); }
+  .devname { font-size:15px; font-weight:600; letter-spacing:-.01em; }
+  .statuspill { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:6px 10px;
+    background:var(--chip-bg); color:var(--ink-2); font:11px/1 'IBM Plex Mono',monospace; }
+  .statuspill .dot { width:6px; height:6px; border-radius:50%; background:var(--ok-dot); }
+  .statuspill.warn { color:var(--warn); } .statuspill.warn .dot { background:var(--warn); }
+  .tb-right { margin-left:auto; display:flex; align-items:center; gap:10px; -webkit-app-region:no-drag; }
+  .themeswitch { display:flex; gap:2px; padding:3px; border-radius:8px; background:var(--chip-bg); }
+  .themeswitch button { border:0; cursor:pointer; width:30px; height:24px; border-radius:6px; font-size:12px; line-height:1;
+    background:transparent; color:var(--muted); transition:.12s; }
+  :root[data-theme="light"] #themeLight, :root[data-theme="dark"] #themeDark { background:var(--card); color:var(--accent); }
+  .winbtn { width:26px; height:26px; border-radius:6px; background:transparent; cursor:pointer;
+    font-size:13px; line-height:1; border:1px solid var(--line); color:var(--muted); display:grid; place-items:center; padding:0; transition:.12s; }
+  .winbtn:hover { border-color:var(--accent); color:var(--accent); }
+  .winbtn.close:hover { background:var(--danger); color:#fff; border-color:var(--danger); }
+
+  /* ---- Body ---- */
+  .body { flex:1; min-height:0; display:flex; }
+
+  /* connect screen */
+  .connect { flex:1; display:grid; place-items:center; padding:24px; }
+  .connectCard { background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow-card);
+    padding:28px 32px; text-align:center; max-width:460px; }
+  .connectCard .ct-title { font-size:18px; font-weight:600; color:var(--ink); }
+  .connectCard .ct-sub { color:var(--muted); font-size:13px; margin:8px 0 20px; }
+
+  /* workspace */
+  .workspace { flex:1; min-height:0; display:grid; grid-template-columns:1fr 312px; gap:16px; padding:16px 20px; }
+  .col-left { min-width:0; display:flex; flex-direction:column; gap:14px; }
+  .col-rail { display:flex; flex-direction:column; gap:12px; min-height:0; }
+
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow-flat); }
+  .seclabel { font:600 10px/1 'IBM Plex Mono',monospace; letter-spacing:.14em; color:var(--muted); text-transform:uppercase; }
+
+  /* buttons */
+  .btn { font:500 12px/1 'IBM Plex Sans',sans-serif; cursor:pointer; padding:9px; border-radius:8px;
+    background:var(--btn-bg); border:1px solid var(--line); color:var(--ink-2); transition:.12s; }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+  .btn.sm { font-size:11.5px; padding:6px 11px; border-radius:7px; }
+  .btn.on { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .btn.on:hover { color:var(--accent-ink); filter:brightness(1.05); }
+
+  /* graph card */
+  .graphcard { position:relative; height:360px; flex:none; border-radius:14px; overflow:hidden;
+    cursor:crosshair; box-shadow:var(--shadow-card); }
+  canvas#graph { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .node { position:absolute; width:22px; height:22px; margin:-11px 0 0 -11px; border-radius:50%;
+    display:grid; place-items:center; font:600 10px/1 'IBM Plex Mono',monospace; cursor:grab; touch-action:none;
+    border:2px solid var(--card); box-shadow:var(--shadow-node);
+    background:var(--node-dim); color:var(--node-dim-ink); }
+  .node.active { background:var(--accent); color:var(--accent-ink); }
+  .node.grabbing { cursor:grabbing; }
+
+  /* band list card */
+  .bandcard { flex:1; min-height:0; padding:14px 16px; display:flex; flex-direction:column; gap:10px; overflow:hidden; }
+  .bandhead { flex:none; display:flex; align-items:baseline; justify-content:space-between; }
+  .headbtns { display:flex; gap:6px; }
+  .bandgrid { flex:1; min-height:0; overflow:auto; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(5,auto); grid-auto-flow:column; gap:7px 14px; align-content:start; }
+  .band { display:grid; grid-template-columns:20px 1fr; gap:9px; align-items:center; padding:7px 9px; border-radius:9px; background:var(--row-bg); }
+  .band.flat { background:transparent; opacity:.45; }
+  .band .chip { width:20px; height:20px; border-radius:6px; display:grid; place-items:center;
+    font:600 10px/1 'IBM Plex Mono',monospace; background:var(--accent); color:var(--accent-ink); }
+  .band.flat .chip { background:var(--node-dim); color:var(--node-dim-ink); }
+  .band .content { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .band .readout { display:flex; align-items:baseline; gap:8px; }
+  .band .rf { font:500 12.5px/1 'IBM Plex Mono',monospace; color:var(--ink); }
+  .band .rg { font:500 12.5px/1 'IBM Plex Mono',monospace; }
+  .band .rg.pos { color:var(--pos); } .band .rg.cut { color:var(--accent); } .band .rg.zero { color:var(--faint); }
+  .band .rq { font:11px/1 'IBM Plex Mono',monospace; margin-left:auto; color:var(--faint); }
+  .band .rt { font:600 10px/1 'IBM Plex Mono',monospace; letter-spacing:.08em; color:var(--ink-2); cursor:pointer; }
+  .band .rt:hover { color:var(--accent); }
+  .band .sliders { display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px; }
+
+  /* sliders (band + preamp) */
+  input[type=range] { -webkit-appearance:none; appearance:none; width:100%; background:transparent; cursor:pointer; height:12px; margin:0; }
+  input[type=range]::-webkit-slider-runnable-track { height:4px; border-radius:2px;
+    background:linear-gradient(to right, var(--accent) var(--pct,0%), var(--track) var(--pct,0%)); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:10px; height:10px; margin-top:-3px;
+    border-radius:50%; background:var(--card); border:2px solid var(--accent); }
+  input[type=range].preamp { height:16px; }
+  input[type=range].preamp::-webkit-slider-thumb { width:16px; height:16px; margin-top:-6px; box-shadow:var(--shadow-node); }
+
+  /* preamp card */
+  .preampcard { padding:14px; display:flex; flex-direction:column; gap:11px; }
+  .row { display:flex; align-items:center; gap:9px; }
+  .row.spread { justify-content:space-between; }
+  .row2 { display:flex; gap:7px; }
+  .row2 .btn { flex:1; }
+  .preampval { font:500 16px/1 'IBM Plex Mono',monospace; color:var(--ink); }
+  .clip { display:flex; align-items:center; gap:9px; padding:9px 11px; border-radius:9px; font:11.5px/1.4 'IBM Plex Mono',monospace; }
+  .clip .dot { width:7px; height:7px; border-radius:50%; flex:none; }
+  .clip.ok { background:var(--ok-bg); color:var(--pos); } .clip.ok .dot { background:var(--pos); }
+  .clip.warn { background:var(--warn-bg); color:var(--warn); } .clip.warn .dot { background:var(--warn); }
+
+  /* active profile card */
+  .profcard { padding:14px; display:flex; flex-direction:column; gap:9px; }
+  .presetgrid { display:flex; flex-direction:column; gap:6px; }
+  .preset { font:500 12px/1 'IBM Plex Mono',monospace; cursor:pointer; padding:10px 12px; border-radius:8px;
+    background:var(--btn-bg); color:var(--ink-2); border:1px solid var(--line); transition:.12s; text-align:left;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .preset:hover { border-color:var(--accent); color:var(--accent); }
+  .preset.on { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .preset:disabled { opacity:.45; cursor:not-allowed; }
+  .preset:disabled:hover { border-color:var(--line); color:var(--ink-2); }
+
+  /* saved eqs card */
+  .savedcard { flex:1; min-height:0; padding:14px; display:flex; flex-direction:column; gap:9px; overflow:hidden; }
+  .savedlist { flex:1; min-height:0; display:flex; flex-direction:column; gap:5px; overflow:auto; }
+  .saved { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:8px; cursor:pointer; background:var(--row-bg); transition:.12s; }
+  .saved:hover { background:var(--chip-bg); }
+  .saved .sname { font-size:12.5px; color:var(--ink); }
+  .saved .stag { font:9px/1 'IBM Plex Mono',monospace; color:var(--accent); border:1px solid var(--line); border-radius:999px; padding:2px 6px; }
+  .saved .smeta { font:10.5px/1 'IBM Plex Mono',monospace; margin-left:auto; color:var(--faint); }
+  .saved .sdel { color:var(--faint); cursor:pointer; opacity:0; transition:.12s; }
+  .saved:hover .sdel { opacity:1; } .saved .sdel:hover { color:var(--danger); }
+  .savedfoot { display:flex; gap:6px; }
+  .savedfoot input { flex:1; min-width:0; font:12px/1 'IBM Plex Sans',sans-serif; padding:9px 10px; border-radius:8px;
+    background:var(--card); border:1px solid var(--line); color:var(--ink); user-select:text; }
+  .savedfoot input:focus { outline:none; border-color:var(--accent); }
+  .savedempty { color:var(--faint); font-size:12px; padding:4px 2px; }
+
+  /* write + utility links */
+  .writewrap { display:flex; flex-direction:column; gap:7px; }
+  .writebtn { font:600 14px/1 'IBM Plex Sans',sans-serif; padding:15px; border-radius:10px; border:0; cursor:pointer;
+    background:var(--accent); color:var(--accent-ink); box-shadow:var(--shadow-accent); transition:.12s; }
+  .writebtn:hover { filter:brightness(1.05); }
+  .writebtn:disabled { opacity:.6; cursor:not-allowed; filter:none; }
+  .utils { display:flex; justify-content:space-between; font:10.5px/1 'IBM Plex Mono',monospace; }
+  .utils a { color:var(--muted); cursor:pointer; transition:.12s; }
+  .utils a:hover { color:var(--accent); }
+  .writenote { font:11.5px/1.35 'IBM Plex Mono',monospace; color:var(--warn); background:var(--warn-bg);
+    border:1px solid color-mix(in srgb,var(--warn) 35%,transparent); border-radius:9px; padding:9px 11px; }
+
+  /* modals */
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+    display:grid; place-items:center; z-index:50; }
+  .modal { width:520px; max-width:calc(100vw - 48px); max-height:calc(100vh - 96px); background:var(--card);
+    border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow-card); padding:18px 20px;
+    display:flex; flex-direction:column; gap:12px; }
+  .modal .mhead { display:flex; align-items:center; justify-content:space-between; }
+  .modal .mtitle { font-size:15px; font-weight:600; color:var(--ink); }
+  .modal .msub { color:var(--muted); font-size:12px; margin-top:2px; }
+  textarea { width:100%; min-height:150px; font-family:'IBM Plex Mono',ui-monospace,Consolas,monospace; font-size:12px;
+    border:1px solid var(--line); border-radius:9px; padding:10px; background:var(--card); color:var(--ink); resize:vertical; user-select:text; }
+  textarea:focus { outline:none; border-color:var(--accent); }
+  #log { font-family:'IBM Plex Mono',ui-monospace,Consolas,monospace; font-size:11.5px; background:var(--row-bg); border-radius:9px;
+    border:1px solid var(--line); padding:10px 12px; height:300px; overflow:auto; white-space:pre-wrap; color:var(--muted); user-select:text; }
+  .impmsg { font-size:12px; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="titlebar" data-tauri-drag-region>
+    <div class="mark" data-tauri-drag-region><svg viewBox="0 0 1024 1024" aria-hidden="true"><defs><linearGradient id="mk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b6ef5"/><stop offset="1" stop-color="#34379f"/></linearGradient></defs><rect width="1024" height="1024" fill="url(#mk)"/><path d="M150 588 C 280 588 300 372 448 372 C 566 372 566 664 700 664 C 806 664 828 536 874 536" fill="none" stroke="#fff" stroke-width="74" stroke-linecap="round" stroke-linejoin="round"/><circle cx="448" cy="372" r="62" fill="#fff"/><circle cx="700" cy="664" r="62" fill="#fff"/></svg></div>
+    <span class="devname" id="devName" data-tauri-drag-region>FreeDSP Studio</span>
+    <span class="statuspill hidden" id="statusPill" data-tauri-drag-region><span class="dot"></span><span class="mono" id="statusText"></span></span>
+    <div class="tb-right">
+      <button class="winbtn hidden" id="disconnectBtn" title="Disconnect">⏏</button>
+      <div class="themeswitch">
+        <button id="themeLight" title="Light">☀</button>
+        <button id="themeDark" title="Dark">☾</button>
+      </div>
+      <button class="winbtn" id="minBtn" title="Minimise">–</button>
+      <button class="winbtn close" id="closeBtn" title="Close">✕</button>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <div id="connect" class="connect">
+      <div class="connectCard">
+        <div class="ct-title" id="connectTitle">Looking for a cable…</div>
+        <div class="ct-sub">Plug in your DSP cable, then click Detect. Nothing is changed until you Write.</div>
+        <button id="connectBtn" class="writebtn" style="padding:12px 20px; font-size:15px">Detect cable</button>
+      </div>
+    </div>
+
+    <div id="workspace" class="workspace hidden">
+
+      <div class="col-left">
+        <div class="readnote hidden" id="readNote">
+          <span>Read-back gains are whole dB, the cable can only report integer values, so any decimals are rounded on read. There's nothing the app can do about that. For precise edits, save an EQ and tweak the saved copy rather than relying on the read-back.</span>
+          <span class="rn-x" id="readNoteX" title="Dismiss">✕</span>
+        </div>
+        <div class="graphcard card" id="graphCard"><canvas id="graph"></canvas></div>
+
+        <div class="bandcard card">
+          <div class="bandhead">
+            <span class="seclabel">Custom EQ · 9 bands</span>
+            <div class="headbtns">
+              <button class="btn sm" id="sortBtn" title="Order bands by frequency">Sort</button>
+              <button class="btn sm" id="flatBtn" title="Reset all bands to flat">Flatten</button>
+              <button class="btn sm" id="undoBtn" title="Undo last change" disabled>↶ Undo</button>
+            </div>
+          </div>
+          <div class="bandgrid" id="bands"></div>
+        </div>
+      </div>
+
+      <div class="col-rail">
+        <div class="profcard card hidden" id="profCard">
+          <span class="seclabel">Active profile</span>
+          <div class="presetgrid" id="presetGrid"></div>
+        </div>
+
+        <div class="preampcard card">
+          <div class="row spread">
+            <span class="seclabel">Preamp</span>
+            <span class="preampval" id="preampVal">0.0 dB</span>
+          </div>
+          <input type="range" class="preamp" id="preampSlider" min="-20" max="0" step="0.1" value="0">
+          <div class="row2">
+            <button class="btn" id="autoPreampBtn" title="Set preamp to just avoid clipping">Auto headroom</button>
+            <button class="btn" id="hiGainBtn" title="Raise the per-band ceiling from +3 to +6 dB">+6 dB mode</button>
+          </div>
+          <div class="clip ok" id="clip"><span class="dot"></span><span id="clipText"></span></div>
+        </div>
+
+        <div class="savedcard card">
+          <span class="seclabel">Saved EQs</span>
+          <div class="savedlist" id="savedChips"></div>
+          <div class="savedfoot">
+            <input type="text" id="saveName" placeholder="Name…">
+            <button class="btn" id="saveBtn">Save</button>
+          </div>
+        </div>
+
+        <div class="writewrap">
+          <div class="writenote hidden" id="writeNote"></div>
+          <button class="writebtn" id="writeBtn">Write to cable</button>
+          <div class="utils">
+            <a id="linkRead" title="Read the cable's current custom bank">read cable</a>
+            <a id="linkImport" title="Import from squig.link / AutoEQ">import</a>
+            <a id="linkExport" title="Export as squig.link parametric text">export</a>
+            <a id="linkLog" title="Diagnostics log">log</a>
+            <a id="linkAbout" title="About FreeDSP Studio">about</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---- Modals ---- -->
+<div class="overlay hidden" id="overlay">
+  <div class="modal hidden" id="modalImport">
+    <div class="mhead">
+      <div><div class="mtitle">Import EQ</div><div class="msub">Paste an Equalizer APO / squig.link parametric export.</div></div>
+      <button class="winbtn" data-close title="Close">✕</button>
+    </div>
+    <textarea id="impText" placeholder="Preamp: -3.8 dB&#10;Filter 1: ON PK Fc 105 Hz Gain 3.0 dB Q 0.70&#10;Filter 2: ON LSC Fc 60 Hz Gain 4.0 dB Q 0.70 ..."></textarea>
+    <div class="row" style="justify-content:space-between">
+      <span class="impmsg" id="impMsg"></span>
+      <button class="btn on" id="impBtn">Parse &amp; load</button>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modalExport">
+    <div class="mhead">
+      <div><div class="mtitle">Export EQ</div><div class="msub">squig.link / Equalizer APO parametric text for the active bands.</div></div>
+      <button class="winbtn" data-close title="Close">✕</button>
+    </div>
+    <textarea id="expText" readonly></textarea>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn" id="copyBtn">Copy</button>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modalLog">
+    <div class="mhead">
+      <div><div class="mtitle">Diagnostics</div><div class="msub">Device I/O and write log.</div></div>
+      <button class="winbtn" data-close title="Close">✕</button>
+    </div>
+    <div id="log" class="mono"></div>
+  </div>
+
+  <div class="modal hidden" id="modalClip">
+    <div class="mhead">
+      <div><div class="mtitle" id="clipTitle">This EQ will clip</div><div class="msub" id="clipSub"></div></div>
+      <button class="winbtn" data-close title="Cancel">✕</button>
+    </div>
+    <div class="clip warn"><span class="dot"></span><span id="clipDlgText"></span></div>
+    <div class="row" style="justify-content:flex-end; gap:8px">
+      <button class="btn" id="clipCancel">Cancel</button>
+      <button class="btn" id="clipAccept">Write anyway</button>
+      <button class="btn on" id="clipAuto">Auto headroom &amp; write</button>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modalAbout">
+    <div class="mhead">
+      <div><div class="mtitle">FreeDSP Studio</div><div class="msub">v0.1.0 · open-source EQ editor for Moondrop DSP cables</div></div>
+      <button class="winbtn" data-close title="Close">✕</button>
+    </div>
+    <div style="font:12.5px/1.5 'IBM Plex Sans',sans-serif; color:var(--muted)">
+      Read, edit and write the on-cable 9-band parametric EQ. Independent project, not affiliated with or endorsed by Moondrop. If it's useful to you, a coffee is always appreciated ☕
+    </div>
+    <div class="row" style="gap:8px; margin-top:2px">
+      <button class="btn on" id="aboutCoffee">☕ Buy me a coffee</button>
+      <button class="btn" id="aboutGithub">GitHub</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Tauri backend bridge, mirrors the old Electron window.dsp / window.win contract,
+// so the rest of this file is unchanged. Each call resolves to {ok, data} / {ok:false, error}.
+(function(){
+  var invoke = function(cmd, args){ return window.__TAURI__.core.invoke(cmd, args); };
+  var wrap = function(p){ return p.then(function(data){ return {ok:true, data:data}; })
+                           .catch(function(err){ return {ok:false, error:String(err)}; }); };
+  window.dsp = {
+    open:      function(){ return wrap(invoke('open')); },
+    close:     function(){ return wrap(invoke('close')); },
+    readMode:  function(){ return wrap(invoke('read_mode')); },
+    readBank:  function(){ return wrap(invoke('read_bank')); },
+    setPreset: function(idx){ return wrap(invoke('set_preset', { idx: idx })); },
+    writeBank: function(bands, preamp){ return wrap(invoke('write_bank', { bands: bands, preamp: preamp })); }
+  };
+  window.win = {
+    minimize: function(){ return invoke('win_minimize'); },
+    close:    function(){ return invoke('win_close'); }
+  };
+  window.saved = {
+    load: function(){ return invoke('saved_load'); },
+    save: function(data){ return invoke('saved_save', { data: data }); }
+  };
+  window.app = {
+    openUrl: function(url){ return invoke('open_url', { url: url }); }
+  };
+})();
+</script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const log = (m) => { const el=$('log'); if(el){ el.textContent += m + "\n"; el.scrollTop = el.scrollHeight; } };
+const show = (id,on) => $(id).classList.toggle('hidden', !on);
+const clamp = (v,lo,hi) => Math.min(hi, Math.max(lo, v));
+const NB = 9;
+
+const LIM = { fMin:20, fMax:20000, gMin:-12, gMax:3, qMin:0.2, qMax:10 }; // gMax = default cap; +6 dB mode raises it
+const DEFAULT_FREQS = [31,62,125,250,500,1000,2000,4000,8000];
+// Built-in starting points, surfaced as read-only entries in "Saved EQs" so FreeDSP (no firmware
+// presets) can still load the DUSK voicings. Kept independent of Moondrop's own data.
+const STARTING = {
+  'DUSK Default': [[1400,-3,0.8],[5400,-3,2.0],[14000,-5,2.0]],
+  'DUSK V':       [[250,-3,0.4],[1500,-6,0.6],[5400,-3,2.0],[14000,-5,2.0]],
+  'DUSK Harman':  [[80,-2,0.2],[400,-3,0.4],[1600,-4,1.2],[14000,-10,2.0]],
+  'DUSK Bass+':   [[140,1,0.4],[200,-1,3.0],[300,-6,0.4],[1500,-7,0.6],[5400,-3,2.5],[8000,-5,0.4],[14000,-7,2.0]],
+  'DUSK Diffuse': [[65,-7,0.7],[1500,-5,0.4],[2900,3,2.5],[6000,-2,3.0],[14000,-10,2.0]],
+};
+const SQUIG_TYPE = { PK:'PK', PEQ:'PK', LSC:'LSQ', LS:'LSQ', LSQ:'LSQ', HSC:'HSQ', HS:'HSQ', HSQ:'HSQ' };
+const RTYPE = { PK:'PK', LSQ:'LSC', HSQ:'HSC' };
+const TYPE_LABEL = { PK:'PK', LSQ:'LSC', HSQ:'HSC' };
+const TYPE_CYCLE = ['PK','LSQ','HSQ'];
+
+// ---- state ----
+let model = [];
+let preamp = 0;
+let hiGain = false;   // "+6 dB mode", raises the per-band gain cap
+let gCeil = 6;        // ceiling used when +6 dB mode is on
+let cable = null;
+function curGMax(){ return hiGain ? gCeil : LIM.gMax; }
+
+// ---- undo ----
+let history=[];
+function snap(){ return { model: model.map(b=>({...b})), preamp, hiGain, gCeil }; }
+function pushUndo(){ const s=snap(); if(history.length && JSON.stringify(history[history.length-1])===JSON.stringify(s)) return; history.push(s); if(history.length>60) history.shift(); updateUndoBtn(); }
+function undo(){ if(!history.length) return; const s=history.pop(); model=s.model.map(b=>({...b})); preamp=s.preamp; hiGain=s.hiGain; gCeil=s.gCeil; renderAll(); updateUndoBtn(); }
+function updateUndoBtn(){ const b=$('undoBtn'); if(b) b.disabled=!history.length; }
+function paintSlider(inp){ const mn=+inp.min, mx=+inp.max, pct=((+inp.value-mn)/(mx-mn))*100; inp.style.setProperty('--pct', pct.toFixed(1)+'%'); }
+
+// ---- EQ math (RBJ cookbook) ----
+function rbj(type,f,g,q,fs){
+  const A=Math.pow(10,g/40), w=2*Math.PI*f/fs, cw=Math.cos(w), sw=Math.sin(w), al=sw/(2*q);
+  let b0,b1,b2,a0,a1,a2;
+  if(type==='LSQ'||type==='HSQ'){ const sa=(sw/2)*Math.sqrt((A+1/A)*(1/q-1)+2), t=2*Math.sqrt(A)*sa;
+    if(type==='LSQ'){ b0=A*((A+1)-(A-1)*cw+t); b1=2*A*((A-1)-(A+1)*cw); b2=A*((A+1)-(A-1)*cw-t);
+      a0=(A+1)+(A-1)*cw+t; a1=-2*((A-1)+(A+1)*cw); a2=(A+1)+(A-1)*cw-t; }
+    else { b0=A*((A+1)+(A-1)*cw+t); b1=-2*A*((A-1)+(A+1)*cw); b2=A*((A+1)+(A-1)*cw-t);
+      a0=(A+1)-(A-1)*cw+t; a1=2*((A-1)-(A+1)*cw); a2=(A+1)-(A-1)*cw-t; } }
+  else { b0=1+al*A; b1=-2*cw; b2=1-al*A; a0=1+al/A; a1=-2*cw; a2=1-al/A; }
+  return {b0,b1,b2,a0,a1,a2};
+}
+function magDb(band,atF){
+  const {b0,b1,b2,a0,a1,a2}=rbj(band.type,band.freq,band.gain,band.q,48000);
+  const w=2*Math.PI*atF/48000, c1=Math.cos(w),s1=Math.sin(w),c2=Math.cos(2*w),s2=Math.sin(2*w);
+  const nR=b0+b1*c1+b2*c2, nI=-(b1*s1+b2*s2), dR=a0+a1*c1+a2*c2, dI=-(a1*s1+a2*s2);
+  return 10*Math.log10((nR*nR+nI*nI)/(dR*dR+dI*dI));
+}
+function combinedAt(f){ let s=0; for(const b of model) if(b.gain) s+=magDb(b,f); return s; }
+function peak(){ let p=-Infinity,pf=0; for(let i=0;i<=240;i++){ const f=20*Math.pow(1000,i/240), v=combinedAt(f); if(v>p){p=v;pf=f;} } return {p,pf:Math.round(pf)}; }
+
+// ---- model helpers ----
+function blankBand(f){ return { freq:f, gain:0, q:1.0, type:'PK' }; }
+function blankModel(){ return DEFAULT_FREQS.map(f=>blankBand(f)); }
+function fill9(list){
+  const out = list.slice(0,NB).map(b=>({ freq:b.freq, gain:b.gain, q:b.q, type:b.type||'PK' }));
+  for(let i=out.length;i<NB;i++) out.push(blankBand(DEFAULT_FREQS[i]));
+  return out;
+}
+function ensureCeilFor(maxGain){ if(maxGain>LIM.gMax){ hiGain=true; gCeil=clamp(Math.max(gCeil,Math.ceil(maxGain)),3,12); } }
+
+// ---- coordinate mapping (shared by canvas + nodes) ----
+const DB_MIN=-15, DB_MAX=12, DB_SPAN=DB_MAX-DB_MIN;
+const fToX = (f) => Math.log10(f/20)/Math.log10(1000);          // 0..1
+const xToF = (x) => Math.round(20*Math.pow(1000, x));
+const dbToY = (db) => 1-((db-DB_MIN)/DB_SPAN);                   // 0..1 (top=0)
+
+// ---- graph ----
+function drawGraph(){
+  const cv=$('graph'); if(!cv) return; const dpr=window.devicePixelRatio||1;
+  const W=cv.clientWidth, H=cv.clientHeight; if(!W||!H) return; cv.width=W*dpr; cv.height=H*dpr;
+  const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  const css=getComputedStyle(document.documentElement);
+  const gridLine=css.getPropertyValue('--grid-line'), gridZero=css.getPropertyValue('--grid-zero'),
+        accent=css.getPropertyValue('--accent'), bandLine=css.getPropertyValue('--band-line'),
+        faint=css.getPropertyValue('--faint'), accentFill=css.getPropertyValue('--accent-fill');
+  const x=(f)=> fToX(f)*W, y=(db)=> dbToY(db)*H;
+  // vertical gridlines + labels
+  ctx.lineWidth=1; ctx.fillStyle=faint; ctx.font="10px 'IBM Plex Mono',monospace";
+  [20,50,100,200,500,1000,2000,5000,10000,20000].forEach(f=>{ const px=x(f); ctx.strokeStyle=gridLine;
+    ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,H); ctx.stroke();
+    ctx.fillText(f>=1000?(f/1000)+'k':f, px+6, H-7); });
+  // horizontal gridlines + dB labels
+  for(let db=DB_MIN+3; db<DB_MAX; db+=3){ const py=y(db);
+    ctx.strokeStyle= db===0?gridZero:gridLine; ctx.lineWidth= db===0?1.5:1;
+    ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(W,py); ctx.stroke();
+    if(db%6===0){ ctx.fillText((db>0?'+':'')+db, 9, py-3); } }
+  // individual band curves
+  ctx.lineWidth=1; ctx.strokeStyle=bandLine;
+  for(const b of model){ if(!b.gain) continue; ctx.beginPath();
+    for(let px=0;px<=W;px+=2){ const f=20*Math.pow(1000,px/W); const v=magDb(b,f); px===0?ctx.moveTo(px,y(v)):ctx.lineTo(px,y(v)); } ctx.stroke(); }
+  // combined curve (+ area fill)
+  const pts=[]; for(let px=0;px<=W;px+=1){ const f=20*Math.pow(1000,px/W); pts.push([px, y(combinedAt(f)+preamp)]); }
+  const grad=ctx.createLinearGradient(0,0,0,H); grad.addColorStop(0,accentFill.trim()||'transparent'); grad.addColorStop(1,'transparent');
+  ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(const p of pts) ctx.lineTo(p[0],p[1]);
+  ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(const p of pts) ctx.lineTo(p[0],p[1]);
+  ctx.lineWidth=2.5; ctx.strokeStyle=accent; ctx.stroke();
+}
+
+// ---- preamp / clip ----
+function syncPreampUI(){ const s=$('preampSlider'); if(s){ s.value=preamp; $('preampVal').textContent=preamp.toFixed(1)+' dB'; paintSlider(s); } }
+function setPreamp(v){ preamp=Math.round(clamp(v,-20,0)*10)/10; syncPreampUI(); drawGraph(); updateClip(); }
+function updateClip(){
+  const {p:raw,pf}=peak(); const eff=raw+preamp; const el=$('clip'), t=$('clipText');
+  if(eff>0.1){ el.className='clip warn';
+    t.textContent=`Peaks at +${eff.toFixed(1)} dB @ ${pf} Hz${preamp?` (with ${preamp.toFixed(1)} dB preamp)`:''}, may clip.`; }
+  else { el.className='clip ok';
+    t.textContent=`Peaks at ${eff>0?'+':''}${eff.toFixed(1)} dB${preamp?` (with ${preamp.toFixed(1)} dB preamp)`:''}, no clipping expected.`; }
+}
+function refreshCurve(){ syncPreampUI(); drawGraph(); updateClip(); }
+function syncHiGainUI(){ $('hiGainBtn').classList.toggle('on', hiGain); }
+
+// ---- graph nodes (draggable, layered over the canvas) ----
+let nodeEls=[];
+function renderNodes(){
+  const gc=$('graphCard'); nodeEls.forEach(n=>n.remove()); nodeEls=[];
+  model.forEach((b,i)=>{
+    const n=document.createElement('div'); n.className='node'; n.textContent=String(i+1);
+    n.onpointerdown = nodeHandler(i, n);
+    gc.appendChild(n); nodeEls.push(n);
+  });
+  positionNodes();
+}
+function positionNodes(){
+  model.forEach((b,i)=>{ const n=nodeEls[i]; if(!n) return;
+    n.style.left = clamp(fToX(b.freq),0,1)*100 + '%';
+    n.style.top  = clamp(dbToY(b.gain)*100, 2, 98).toFixed(2) + '%';
+    n.classList.toggle('active', !!b.gain);
+  });
+}
+function nodeHandler(i, el){
+  return (e)=>{
+    e.preventDefault();
+    const box=$('graphCard').getBoundingClientRect();
+    el.classList.add('grabbing'); el.setPointerCapture&&el.setPointerCapture(e.pointerId);
+    let first=true;
+    const apply=(ev)=>{
+      const px=clamp((ev.clientX-box.left)/box.width,0,1);
+      const py=clamp((ev.clientY-box.top)/box.height,0,1);
+      if(first){ pushUndo(); first=false; }
+      model[i].freq = clamp(xToF(px), LIM.fMin, LIM.fMax);
+      model[i].gain = clamp(Math.round(((1-py)*DB_SPAN+DB_MIN)*10)/10, LIM.gMin, curGMax());
+      updateReadout(i); syncSliders(i); positionNodes(); drawGraph(); updateClip();
+    };
+    const move=(ev)=>apply(ev);
+    const up=()=>{ el.classList.remove('grabbing'); window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); };
+    window.addEventListener('pointermove',move); window.addEventListener('pointerup',up);
+    apply(e);
+  };
+}
+
+// ---- band rows ----
+function fToSlider(f){ return Math.round(1000*Math.log10(f/LIM.fMin)/Math.log10(LIM.fMax/LIM.fMin)); }
+function sliderToF(v){ return Math.round(LIM.fMin*Math.pow(LIM.fMax/LIM.fMin, v/1000)); }
+function freqLabel(f){ return f>=1000 ? (f/1000).toFixed(f%1000?1:0)+' kHz' : f+' Hz'; }
+let rowEls=[];
+function renderBands(){
+  const box=$('bands'); box.innerHTML=''; rowEls=[];
+  model.forEach((b,i)=>{
+    const row=document.createElement('div'); row.className='band'; row.dataset.i=i;
+    row.innerHTML=
+      `<div class="chip">${i+1}</div>`+
+      `<div class="content">`+
+        `<div class="readout">`+
+          `<span class="rf"></span><span class="rg"></span>`+
+          `<span class="rq"></span><span class="rt" title="Click to change filter type"></span>`+
+        `</div>`+
+        `<div class="sliders">`+
+          `<input type="range" min="0" max="1000" data-k="freq">`+
+          `<input type="range" step="0.1" data-k="gain">`+
+          `<input type="range" min="${LIM.qMin}" max="${LIM.qMax}" step="0.1" data-k="q">`+
+        `</div>`+
+      `</div>`;
+    row.querySelector('.rt').onclick = ()=>{ pushUndo(); b.type=TYPE_CYCLE[(TYPE_CYCLE.indexOf(b.type)+1)%3]; renderAll(); };
+    row.querySelectorAll('input[type=range]').forEach(inp=>{
+      inp.onpointerdown = pushUndo;
+      inp.oninput = ()=>{ const k=inp.dataset.k;
+        if(k==='freq') b.freq=sliderToF(+inp.value);
+        else if(k==='gain') b.gain=clamp(Math.round(+inp.value*10)/10,LIM.gMin,curGMax());
+        else b.q=clamp(Math.round(+inp.value*100)/100,LIM.qMin,LIM.qMax);
+        updateReadout(i); paintSlider(inp); positionNodes(); drawGraph(); updateClip();
+      };
+    });
+    box.appendChild(row); rowEls.push(row);
+    updateReadout(i); syncSliders(i);
+  });
+}
+function updateReadout(i){
+  const row=rowEls[i], b=model[i]; if(!row) return;
+  row.classList.toggle('flat', !b.gain);
+  row.querySelector('.rf').textContent=freqLabel(b.freq);
+  const rg=row.querySelector('.rg'); rg.textContent=(b.gain>0?'+':'')+b.gain.toFixed(1);
+  rg.className='rg '+(b.gain===0?'zero':(b.gain>0?'pos':'cut'));
+  row.querySelector('.rq').textContent='Q '+b.q.toFixed(2);
+  row.querySelector('.rt').textContent=TYPE_LABEL[b.type]||'PK';
+}
+function syncSliders(i){
+  const row=rowEls[i], b=model[i]; if(!row) return;
+  const f=row.querySelector('[data-k=freq]'), g=row.querySelector('[data-k=gain]'), q=row.querySelector('[data-k=q]');
+  f.value=fToSlider(b.freq); paintSlider(f);
+  g.min=LIM.gMin; g.max=curGMax(); g.value=clamp(b.gain,LIM.gMin,curGMax()); paintSlider(g);
+  q.value=b.q; paintSlider(q);
+}
+function renderAll(){ renderBands(); renderNodes(); syncHiGainUI(); refreshCurve(); }
+
+// ---- squig import / export ----
+function parseSquig(text){
+  const filters=[]; let pre=0, skipped=0;
+  for(const ln of text.split(/\r?\n/)){
+    const pm=ln.match(/Preamp:\s*(-?[\d.]+)\s*dB/i); if(pm){ pre=parseFloat(pm[1]); continue; }
+    const m=ln.match(/Filter\s+\d+:\s+(ON|OFF)\s+(\w+)\s+Fc\s+([\d.]+)\s*Hz\s+Gain\s+(-?[\d.]+)\s*dB\s+Q\s+([\d.]+)/i);
+    if(!m) continue;
+    if(m[1].toUpperCase()==='OFF'){ skipped++; continue; }
+    filters.push({ type:SQUIG_TYPE[m[2].toUpperCase()]||'PK', freq:parseFloat(m[3]), gain:parseFloat(m[4]), q:parseFloat(m[5]) });
+  }
+  return {preamp:pre, filters, skipped};
+}
+function doImport(){
+  const {preamp:filePreamp,filters,skipped}=parseSquig($('impText').value);
+  if(!filters.length){ $('impMsg').textContent='No enabled "Filter N: ON ..." lines found.'; return; }
+  ensureCeilFor(Math.max(0, ...filters.map(f=>f.gain)));
+  const warns=[]; if(filters.length>NB) warns.push(`file had ${filters.length} filters, kept first ${NB}`);
+  const clamped=filters.slice(0,NB).map(f=>{
+    let {freq,gain,q,type}=f;
+    if(freq<LIM.fMin||freq>LIM.fMax){ freq=clamp(freq,LIM.fMin,LIM.fMax); warns.push('freq clamped'); }
+    if(q<LIM.qMin||q>LIM.qMax){ q=clamp(q,LIM.qMin,LIM.qMax); warns.push('Q clamped'); }
+    if(gain>curGMax()||gain<LIM.gMin){ gain=clamp(gain,LIM.gMin,curGMax()); warns.push(`gain clamped to ${LIM.gMin}/+${curGMax()}`); }
+    return {freq,gain:Math.round(gain*10)/10,q,type:type||'PK'};
+  });
+  pushUndo();
+  model = fill9(clamped);
+  preamp = Math.round(clamp(filePreamp,-20,0)*10)/10;
+  const flat = NB - clamped.length;
+  let msg = `Loaded ${clamped.length} filter(s)${flat?`, ${flat} slot(s) flat`:''}. Preamp ${preamp.toFixed(1)} dB applied.`;
+  if(skipped) msg += ` ${skipped} disabled skipped.`;
+  if(warns.length) msg += '  ⚠ '+[...new Set(warns)].join(', ');
+  $('impMsg').textContent = msg;
+  renderAll();
+}
+function doExport(){
+  const active = model.filter(b=>b.gain!==0);
+  const lines=[`Preamp: ${preamp.toFixed(1)} dB`];
+  active.forEach((b,i)=> lines.push(`Filter ${i+1}: ON ${RTYPE[b.type]||'PK'} Fc ${b.freq} Hz Gain ${b.gain.toFixed(1)} dB Q ${b.q.toFixed(3)}`));
+  $('expText').value = lines.join('\n');
+  openModal('modalExport');
+}
+
+// ---- saved EQs (+ built-in DUSK starting points) ----
+// Saved EQs are persisted as a JSON file in the app config dir (via the Tauri backend).
+// An in-memory cache keeps the render path synchronous; writes go through to the file.
+let savedCache = {};
+function loadSaved(){ return savedCache; }
+function storeSaved(o){ savedCache = o || {}; persistSaved(); }
+function persistSaved(){ try { window.saved.save(JSON.stringify(savedCache)).catch(function(e){ log('save failed: '+e); }); } catch(e){ log('save failed: '+e); } }
+async function initSaved(){
+  try { const raw = await window.saved.load(); savedCache = raw ? (JSON.parse(raw) || {}) : {}; }
+  catch(e){ savedCache = {}; log('load saved failed: '+e); }
+  // one-time migration from the old localStorage store
+  if(!savedCache || !Object.keys(savedCache).length){
+    try { const ls = localStorage.getItem('dsp-eqs'); if(ls){ const o = JSON.parse(ls); if(o && Object.keys(o).length){ savedCache = o; persistSaved(); } } } catch(e){}
+  }
+  renderSaved();
+}
+function saveCurrent(){
+  const name = $('saveName').value.trim(); if(!name){ $('saveName').focus(); return; }
+  const o = loadSaved(); o[name] = { bands: model.map(b=>({freq:b.freq,gain:b.gain,q:b.q,type:b.type})), preamp };
+  storeSaved(o); $('saveName').value=''; renderSaved(); log('saved EQ "'+name+'"');
+}
+function applyEq(bnds, pre, label){
+  const mdl=bnds.map(b=>({freq:b.freq,gain:b.gain,q:b.q,type:b.type||'PK'}));
+  pushUndo(); ensureCeilFor(Math.max(0,...mdl.map(b=>b.gain)));
+  model=fill9(mdl); preamp=Math.round(clamp(pre||0,-20,0)*10)/10; renderAll(); log('loaded '+label);
+}
+function nBands(bnds){ return bnds.filter(b=>b.gain!==0).length; }
+function renderSaved(){
+  const box=$('savedChips'); box.innerHTML='';
+  // built-in DUSK starting points first
+  Object.keys(STARTING).forEach(n=>{
+    const bnds=STARTING[n].map(([f,g,q])=>({freq:f,gain:g,q,type:'PK'}));
+    const row=document.createElement('div'); row.className='saved';
+    row.innerHTML=`<span class="sname">${n}</span><span class="stag">built-in</span>`+
+      `<span class="smeta">${nBands(bnds)} bands · 0.0</span>`;
+    row.onclick=()=>applyEq(bnds,0,'built-in "'+n+'"'); box.appendChild(row);
+  });
+  const all=loadSaved(); const names=Object.keys(all);
+  if(!names.length && !Object.keys(STARTING).length){ box.innerHTML='<div class="savedempty">No saved EQs yet.</div>'; return; }
+  names.forEach(n=>{
+    const e=all[n]; const bnds=Array.isArray(e)?e:e.bands; const pre=Array.isArray(e)?0:(e.preamp||0);
+    const row=document.createElement('div'); row.className='saved';
+    row.innerHTML=`<span class="sname">${n}</span>`+
+      `<span class="smeta">${nBands(bnds)} bands · ${pre.toFixed(1)}</span>`+
+      `<span class="sdel" title="Delete">✕</span>`;
+    row.onclick=()=>applyEq(bnds,pre,'saved EQ "'+n+'"');
+    row.querySelector('.sdel').onclick=(ev)=>{ ev.stopPropagation(); const o=loadSaved(); delete o[n]; storeSaved(o); renderSaved(); };
+    box.appendChild(row);
+  });
+}
+
+// ---- device I/O ----
+async function call(promise,label){ const r=await promise; if(!r||!r.ok){ log(`${label} failed: ${r?r.error:'no response'}`); throw new Error(r?r.error:'x'); } return r.data; }
+function renderCable(info){
+  $('devName').textContent=info.name;
+  $('statusText').textContent=`connected · ${info.vid.toString(16)}:${info.pid.toString(16)}`;
+  show('statusPill',true); show('disconnectBtn',true);
+  // Active-profile switching only applies to cables with firmware presets (DUSK, MAY).
+  show('profCard', info.hasPresets===true);
+}
+function renderPresets(active){
+  const box=$('presetGrid'); box.innerHTML='';
+  if(!cable || cable.hasPresets!==true) return;
+  Object.keys(cable.presets).map(Number).sort((a,b)=>a-b).forEach(i=>{
+    const name=cable.presets[i];
+    const b=document.createElement('button'); b.className='preset'+(i===active?' on':'');
+    b.textContent=name; b.title=`Preset ${i} · ${name}`;
+    b.onclick=()=>switchPreset(i); box.appendChild(b);
+  });
+}
+async function refreshMode(){ try{ const a=await call(window.dsp.readMode(),'readMode'); renderPresets(a); }catch(e){} }
+async function readFromCable(){
+  try{ const bands=await call(window.dsp.readBank(),'readBank');
+    const mdl=bands.map((b,i)=> (b&&b.ok) ? {freq:b.freq,gain:Math.round(b.gain),q:b.q,type:b.type==='?'?'PK':b.type} : blankBand(DEFAULT_FREQS[i]));
+    pushUndo(); ensureCeilFor(Math.max(0,...mdl.map(b=>b.gain))); model=fill9(mdl);
+    log(`read ${bands.filter(b=>b&&b.ok).length} bands`); renderAll();
+  }catch(e){}
+}
+// Surface a "wrong / missing cable" block from the dsp-core guard.
+function showWriteNote(msg){ const n=$('writeNote'); n.textContent=msg; show('writeNote',true); $('statusPill').classList.add('warn'); }
+function clearWriteNote(){ show('writeNote',false); $('statusPill').classList.remove('warn'); }
+function isCableIssue(m){ return /Wrong cable|no Moondrop cable/i.test(m); }
+function reportCableIssue(m){
+  const msg = /no Moondrop cable/i.test(m)
+    ? 'No cable detected, nothing was written. Reconnect to continue.'
+    : m.replace(/\s*$/,'') + ' Reconnect to continue.';
+  showWriteNote(msg); log('BLOCKED: '+msg);
+}
+async function switchPreset(idx){ log('switch -> preset '+idx); clearWriteNote();
+  try{ await call(window.dsp.setPreset(idx),'setPreset'); await refreshMode(); await readFromCable(); }
+  catch(e){ const m=String(e.message||e); if(isCableIssue(m)) reportCableIssue(m); } }
+function effPeak(){ const {p,pf}=peak(); return { eff:p+preamp, raw:p, pf }; }
+function autoPreampValue(){ const {p}=peak(); return p>0 ? -(Math.ceil(p*10)/10) : 0; }
+// Write entry point: guard clipping first. In +6 dB mode a clipping EQ is hard-blocked
+// (must reduce level); in normal mode the user gets a choice (Auto headroom / write anyway).
+function writeToCable(){
+  clearWriteNote();
+  const {eff,pf}=effPeak();
+  if(eff>0.1){ openClipDialog(eff,pf); return; }
+  doWrite();
+}
+function openClipDialog(eff,pf){
+  const ap = autoPreampValue();
+  $('clipTitle').textContent = hiGain ? 'Clipping, reduce level to write' : 'This EQ will clip';
+  $('clipDlgText').textContent = `Peaks at +${eff.toFixed(1)} dB @ ${pf} Hz, it will clip.`;
+  $('clipSub').textContent = hiGain
+    ? `+6 dB mode is on, so this can't be written while it clips. Auto headroom sets preamp to ${ap.toFixed(1)} dB to bring it under 0.`
+    : `Auto headroom sets preamp to ${ap.toFixed(1)} dB to remove it, or write anyway and lower your volume.`;
+  show('clipAccept', !hiGain);   // no "write anyway" in +6 dB mode
+  openModal('modalClip');
+}
+async function doWrite(){
+  const out = model.map(b=>({freq:b.freq,gain:b.gain,q:b.q,type:b.type}));
+  const btn=$('writeBtn'); btn.disabled=true; btn.textContent='Writing…';
+  try{ const r=await call(window.dsp.writeBank(out, preamp),'writeBank');
+    log(`wrote ${r.acked}/54 frames; active=${r.active}`); await refreshMode();
+    btn.textContent='Written ✓'; setTimeout(()=>{btn.textContent='Write to cable';},1400);
+  }catch(e){ const m=String(e.message||e);
+    if(isCableIssue(m)){ reportCableIssue(m); btn.textContent='Blocked'; }
+    else btn.textContent='Write failed';
+    setTimeout(()=>{btn.textContent='Write to cable';},1600);
+  }
+  finally { btn.disabled=false; }
+}
+async function detect(){
+  try{ const info=await call(window.dsp.open(),'open');
+    if(!info){ $('connectTitle').textContent='No cable found, plug one in and click Detect'; return; }
+    cable=info; renderCable(info); clearWriteNote(); show('connect',false); show('workspace',true);
+    await refreshMode(); await readFromCable(); requestAnimationFrame(drawGraph);
+  }catch(e){ $('connectTitle').textContent='Error opening cable, see log'; }
+}
+async function disconnect(){ try{ await window.dsp.close(); }catch(e){}
+  cable=null; clearWriteNote(); show('workspace',false); show('statusPill',false); show('disconnectBtn',false);
+  $('devName').textContent='FreeDSP Studio'; show('connect',true); $('connectTitle').textContent='Looking for a cable…'; }
+
+// ---- modals ----
+function openModal(id){ show('overlay',true); ['modalImport','modalExport','modalLog','modalClip','modalAbout'].forEach(m=>show(m, m===id)); }
+function closeModal(){ show('overlay',false); ['modalImport','modalExport','modalLog','modalClip','modalAbout'].forEach(m=>show(m,false)); }
+function flashLink(el,txt){ const o=el.textContent; el.textContent=txt; setTimeout(()=>{el.textContent=o;},1100); }
+
+// ---- theme ----
+function setTheme(t){ document.documentElement.dataset.theme=t; try{ localStorage.setItem('dsp-theme',t); }catch(e){} requestAnimationFrame(drawGraph); }
+
+window.addEventListener('DOMContentLoaded', ()=>{
+  model = blankModel();
+  // title strip
+  $('minBtn').onclick=()=>window.win&&window.win.minimize();
+  $('closeBtn').onclick=()=>window.win&&window.win.close();
+  $('themeLight').onclick=()=>setTheme('light');
+  $('themeDark').onclick=()=>setTheme('dark');
+  $('disconnectBtn').onclick=disconnect;
+  // connect
+  $('connectBtn').onclick=detect;
+  // band list header
+  $('sortBtn').onclick=()=>{ pushUndo(); model.sort((a,b)=>a.freq-b.freq); renderAll(); };
+  $('flatBtn').onclick=()=>{ pushUndo(); model=blankModel(); preamp=0; renderAll(); };
+  $('undoBtn').onclick=undo;
+  // preamp
+  $('preampSlider').onpointerdown=pushUndo; $('preampSlider').oninput=(e)=>setPreamp(+e.target.value);
+  $('autoPreampBtn').onclick=()=>{ pushUndo(); const {p}=peak(); setPreamp(p>0? -(Math.ceil(p*10)/10) : 0); };
+  $('hiGainBtn').onclick=()=>{ pushUndo(); hiGain=!hiGain; if(!hiGain) model.forEach(b=>{ if(b.gain>LIM.gMax) b.gain=LIM.gMax; }); renderAll(); };
+  // saved
+  $('saveBtn').onclick=saveCurrent; $('saveName').onkeydown=(e)=>{ if(e.key==='Enter') saveCurrent(); };
+  // write + utility links
+  $('writeBtn').onclick=writeToCable;
+  $('linkRead').onclick=async ()=>{ await readFromCable(); flashLink($('linkRead'),'read ✓'); show('readNote',true); };
+  $('readNoteX').onclick=()=>show('readNote',false);
+  $('linkImport').onclick=()=>{ openModal('modalImport'); $('impMsg').textContent=''; $('impText').focus(); };
+  $('linkExport').onclick=doExport;
+  $('linkLog').onclick=()=>openModal('modalLog');
+  $('linkAbout').onclick=()=>openModal('modalAbout');
+  $('aboutCoffee').onclick=()=>window.app.openUrl('https://buymeacoffee.com/effectiveequivalent');
+  $('aboutGithub').onclick=()=>window.app.openUrl('https://github.com/EffectiveEquivalent/freedsp-studio');
+  $('impBtn').onclick=doImport;
+  $('copyBtn').onclick=()=>{ const t=$('expText'); t.select(); try{ document.execCommand('copy'); }catch(e){} flashLink($('copyBtn'),'Copied'); };
+  // clip-warning dialog
+  $('clipCancel').onclick=closeModal;
+  $('clipAccept').onclick=()=>{ closeModal(); doWrite(); };
+  $('clipAuto').onclick=()=>{ pushUndo(); setPreamp(autoPreampValue()); closeModal();
+    if(hiGain && effPeak().eff>0.1){ showWriteNote('Still clipping after Auto, lower some band gains before writing in +6 dB mode.'); return; }
+    doWrite(); };
+  // modal close affordances
+  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeModal);
+  $('overlay').onclick=(e)=>{ if(e.target===$('overlay')) closeModal(); };
+  window.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && !$('overlay').classList.contains('hidden')) closeModal(); });
+
+  initSaved();
+  window.addEventListener('resize', drawGraph);
+  detect();
+});
+</script>
+</body>
+</html>

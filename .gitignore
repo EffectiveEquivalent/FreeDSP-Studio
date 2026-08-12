@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+release/
+target/
+*.exe
+
+# Tauri generated bindings
+tools/app/src-tauri/gen/
+
+# Not published. The Tauri app (tools/app) is the release;
+# the Electron build and the CLI stay out of the repo.
+tools/desktop/
+tools/dusk-cli/
+
+# Private and working files, never published
+Private/
+docs/
+EQ tool design refresh/
+EQ tool design refresh.zip
+
+# Proprietary third-party binaries, never publish
+*.apk
+*.xapk
+*.so
+
+# OS and editor cruft
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.log
