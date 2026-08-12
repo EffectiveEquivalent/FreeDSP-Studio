@@ -8,6 +8,12 @@ I made this because the stock app is clunky, locked to whole-dB steps, and it tu
 
 *(Screenshot goes here: the response graph with draggable band nodes.)*
 
+## Download
+
+Grab `FreeDSP-Studio.exe` from the [latest release](https://github.com/EffectiveEquivalent/FreeDSP-Studio/releases). It's a single portable exe, nothing to install.
+
+**Heads up: Windows will warn you about it.** The build isn't code-signed yet, so SmartScreen shows "unknown publisher" for any exe it hasn't seen before. That's a reputation check, not a virus detection. Click More info, then Run anyway. If you'd rather not, run it from source instead (below), or wait: signed releases via [SignPath](https://signpath.org) are in the works.
+
 ## Supported cables
 
 | Cable | USB ID (VID:PID) | Firmware presets |
