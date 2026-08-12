@@ -32,6 +32,8 @@ Windows only for now (the HID layer talks to `hid.dll` directly). A Mac port is 
 - A real preamp, with an auto headroom button and a clip check before every write
 - Switches the active firmware profile on the DUSK and MAY
 - squig.link / AutoEQ import and export (Equalizer APO parametric text)
+- Frequency-response view: load your IEM's measurement and a target, see the EQ'd result
+- Auto-fit the EQ to a target (based on AutoEq), with a configurable range and band count
 - Saves your EQs as plain JSON files you can back up or share
 - Nothing touches the cable until you hit Write
 
@@ -78,6 +80,27 @@ This is a clean, independent implementation of the wire protocol, written for in
 ## Support
 
 If this saved you from the stock app, you can [buy me a coffee](https://buymeacoffee.com/effectiveequivalent). No pressure.
+
+## Changelog
+
+### 0.2.0
+- Frequency-response view (measurement + target + EQ'd result)
+- Auto-fit EQ to a target, based on AutoEq, with configurable frequency range and band count
+- Measurement / target library with rig lock (5128 / 711 / other) and bulk import
+- Any measurement can be used as a target for another IEM
+- Backup and restore all saved EQs and FR curves to a file
+- Edit the EQ as squig / AutoEQ text
+
+### 0.1.0
+- Read, edit and write the cable's 9-band parametric EQ
+- Live response graph with draggable band nodes
+- Fractional-dB gain and a coefficient-based preamp with clip check
+- squig.link / AutoEQ import and export
+- Firmware profile switching (DUSK / MAY), save and recall EQs
+
+## Credits
+
+- Auto-fit is based on [AutoEq](https://github.com/jaakkopasanen/AutoEq) by Jaakko Pasanen (MIT).
 
 ## Built with
 

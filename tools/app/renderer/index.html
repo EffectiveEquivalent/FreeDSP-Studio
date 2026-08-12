@@ -72,6 +72,21 @@
     font:11.5px/1.45 'IBM Plex Mono',monospace; background:var(--chip-bg); color:var(--ink-2); border:1px solid var(--line); }
   .readnote .rn-x { margin-left:auto; cursor:pointer; color:var(--muted); flex:none; }
   .readnote .rn-x:hover { color:var(--accent); }
+  .gmode { position:absolute; top:10px; right:10px; display:flex; gap:2px; padding:3px; border-radius:8px; background:var(--chip-bg); z-index:2; }
+  .gmode button { border:0; cursor:pointer; padding:4px 10px; border-radius:6px; font:600 10px/1 'IBM Plex Mono',monospace; letter-spacing:.06em; background:transparent; color:var(--muted); transition:.12s; }
+  .gmode button.on { background:var(--card); color:var(--accent); }
+  .fr-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .fr-col { display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .fr-hint { font:10.5px/1.35 'IBM Plex Sans',sans-serif; color:var(--faint); margin-top:-4px; }
+  .fr-list { display:flex; flex-direction:column; gap:5px; max-height:150px; overflow:auto; }
+  .fr-cur { outline:1.5px solid var(--accent); }
+  .fr-import { display:flex; gap:6px; align-items:center; }
+  .frrig { font:12px/1 'IBM Plex Mono',monospace; padding:8px 6px; border-radius:8px; background:var(--card); border:1px solid var(--line); color:var(--ink); }
+  #frMsg { font-size:12px; color:var(--muted); min-height:16px; }
+  .fr-rigbar { display:flex; align-items:center; gap:12px; }
+  .rigtoggle { display:flex; gap:2px; padding:3px; border-radius:8px; background:var(--chip-bg); }
+  .rigtoggle button { border:0; cursor:pointer; padding:6px 14px; border-radius:6px; font:600 11px/1 'IBM Plex Mono',monospace; background:transparent; color:var(--muted); transition:.12s; }
+  .rigtoggle button.on { background:var(--accent); color:var(--accent-ink); }
   .devname { font-size:15px; font-weight:600; letter-spacing:-.01em; }
   .statuspill { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:6px 10px;
     background:var(--chip-bg); color:var(--ink-2); font:11px/1 'IBM Plex Mono',monospace; }
@@ -113,6 +128,13 @@
   .btn.sm { font-size:11.5px; padding:6px 11px; border-radius:7px; }
   .btn.on { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
   .btn.on:hover { color:var(--accent-ink); filter:brightness(1.05); }
+  .btn.iconbtn { padding:5px 7px; display:inline-grid; place-items:center; }
+  .fitcfg { display:flex; flex-direction:column; gap:11px; }
+  .fitcfg-row { display:flex; align-items:center; gap:10px; }
+  .fitcfg-row label { flex:1; font-size:13px; color:var(--ink-2); }
+  .fitcfg-row input { width:96px; font:12px/1 'IBM Plex Mono',monospace; padding:8px 9px; border-radius:8px; background:var(--card); border:1px solid var(--line); color:var(--ink); }
+  .fitcfg-row input:focus { outline:none; border-color:var(--accent); }
+  .fitcfg-row .muted { font:11px/1 'IBM Plex Mono',monospace; width:28px; }
 
   /* graph card */
   .graphcard { position:relative; height:360px; flex:none; border-radius:14px; overflow:hidden;
@@ -126,8 +148,16 @@
   .node.grabbing { cursor:grabbing; }
 
   /* band list card */
-  .bandcard { flex:1; min-height:0; padding:14px 16px; display:flex; flex-direction:column; gap:10px; overflow:hidden; }
-  .bandhead { flex:none; display:flex; align-items:baseline; justify-content:space-between; }
+  .bandcard { position:relative; flex:1; min-height:0; padding:14px 16px; display:flex; flex-direction:column; gap:10px; overflow:hidden; }
+  .eqtext-btn { position:absolute; bottom:12px; right:14px; width:28px; height:28px; border-radius:8px; display:grid; place-items:center;
+    background:var(--btn-bg); border:1px solid var(--line); color:var(--muted); cursor:pointer; transition:.12s; z-index:2; box-shadow:var(--shadow-flat); }
+  .eqtext-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .bandhead { flex:none; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .bandhead-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; min-width:0; }
+  .fr-inline { display:flex; align-items:center; gap:6px; }
+  .rigtoggle.sm button { padding:4px 8px; font-size:10px; }
+  .frsel { font:11px/1 'IBM Plex Mono',monospace; padding:5px 6px; border-radius:7px; background:var(--btn-bg); border:1px solid var(--line); color:var(--ink-2); min-width:150px; max-width:210px; cursor:pointer; }
+  .frsel:hover { border-color:var(--accent); }
   .headbtns { display:flex; gap:6px; }
   .bandgrid { flex:1; min-height:0; overflow:auto; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(5,auto); grid-auto-flow:column; gap:7px 14px; align-content:start; }
   .band { display:grid; grid-template-columns:20px 1fr; gap:9px; align-items:center; padding:7px 9px; border-radius:9px; background:var(--row-bg); }
@@ -179,6 +209,10 @@
 
   /* saved eqs card */
   .savedcard { flex:1; min-height:0; padding:14px; display:flex; flex-direction:column; gap:9px; overflow:hidden; }
+  .backuplinks { font:10.5px/1 'IBM Plex Mono',monospace; color:var(--muted); }
+  .backuplinks a { color:var(--muted); cursor:pointer; } .backuplinks a:hover { color:var(--accent); }
+  .backupmsg { font:11px/1 'IBM Plex Mono',monospace; color:var(--pos); }
+  .backupmsg:empty { display:none; }
   .savedlist { flex:1; min-height:0; display:flex; flex-direction:column; gap:5px; overflow:auto; }
   .saved { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:8px; cursor:pointer; background:var(--row-bg); transition:.12s; }
   .saved:hover { background:var(--chip-bg); }
@@ -257,18 +291,38 @@
           <span>Read-back gains are whole dB, the cable can only report integer values, so any decimals are rounded on read. There's nothing the app can do about that. For precise edits, save an EQ and tweak the saved copy rather than relying on the read-back.</span>
           <span class="rn-x" id="readNoteX" title="Dismiss">✕</span>
         </div>
-        <div class="graphcard card" id="graphCard"><canvas id="graph"></canvas></div>
+        <div class="graphcard card" id="graphCard">
+          <canvas id="graph"></canvas>
+          <div class="gmode">
+            <button id="modeEq" class="on" title="EQ curve">EQ</button>
+            <button id="modeFr" title="Frequency response vs target">FR</button>
+          </div>
+        </div>
 
         <div class="bandcard card">
           <div class="bandhead">
             <span class="seclabel">Custom EQ · 9 bands</span>
+            <div class="bandhead-right">
+            <div class="fr-inline">
+              <div class="rigtoggle sm" id="rigToggleInline"><button data-rig="5128" class="on">5128</button><button data-rig="711">711</button><button data-rig="other">other</button></div>
+              <select id="measSel" class="frsel" title="Measurement"></select>
+              <select id="tgtSel" class="frsel" title="Target"></select>
+            </div>
             <div class="headbtns">
+              <button class="btn sm on" id="autoFitBtn" title="Auto-fit the 9 bands to your target">Auto-fit</button>
+              <button class="btn sm iconbtn" id="fitCfgBtn" title="Auto-fit settings">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
               <button class="btn sm" id="sortBtn" title="Order bands by frequency">Sort</button>
               <button class="btn sm" id="flatBtn" title="Reset all bands to flat">Flatten</button>
               <button class="btn sm" id="undoBtn" title="Undo last change" disabled>↶ Undo</button>
             </div>
+            </div>
           </div>
           <div class="bandgrid" id="bands"></div>
+          <button class="eqtext-btn" id="eqTextBtn" title="Edit the EQ as text (squig / AutoEQ)">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="8" x2="19" y2="8"/><line x1="5" y1="12" x2="19" y2="12"/><line x1="5" y1="16" x2="13" y2="16"/></svg>
+          </button>
         </div>
       </div>
 
@@ -305,9 +359,9 @@
           <button class="writebtn" id="writeBtn">Write to cable</button>
           <div class="utils">
             <a id="linkRead" title="Read the cable's current custom bank">read cable</a>
-            <a id="linkImport" title="Import from squig.link / AutoEQ">import</a>
-            <a id="linkExport" title="Export as squig.link parametric text">export</a>
+            <a id="linkBackup" title="Back up or restore your EQs and FR curves">backup</a>
             <a id="linkLog" title="Diagnostics log">log</a>
+            <a id="linkFr" title="Measurement and target">FR</a>
             <a id="linkAbout" title="About FreeDSP Studio">about</a>
           </div>
         </div>
@@ -318,26 +372,50 @@
 
 <!-- ---- Modals ---- -->
 <div class="overlay hidden" id="overlay">
-  <div class="modal hidden" id="modalImport">
+  <div class="modal hidden" id="modalEqText">
     <div class="mhead">
-      <div><div class="mtitle">Import EQ</div><div class="msub">Paste an Equalizer APO / squig.link parametric export.</div></div>
+      <div><div class="mtitle">EQ as text</div><div class="msub">This mirrors the current EQ as squig / Equalizer APO parametric text. Paste a squig export or type it in, then Apply.</div></div>
       <button class="winbtn" data-close title="Close">✕</button>
     </div>
-    <textarea id="impText" placeholder="Preamp: -3.8 dB&#10;Filter 1: ON PK Fc 105 Hz Gain 3.0 dB Q 0.70&#10;Filter 2: ON LSC Fc 60 Hz Gain 4.0 dB Q 0.70 ..."></textarea>
+    <textarea id="eqText" spellcheck="false" placeholder="Preamp: -3.8 dB&#10;Filter 1: ON PK Fc 105 Hz Gain 3.0 dB Q 0.70&#10;Filter 2: ON LSC Fc 60 Hz Gain 4.0 dB Q 0.70 ..."></textarea>
     <div class="row" style="justify-content:space-between">
-      <span class="impmsg" id="impMsg"></span>
-      <button class="btn on" id="impBtn">Parse &amp; load</button>
+      <span class="impmsg" id="eqTextMsg"></span>
+      <div class="row" style="gap:8px">
+        <button class="btn" id="eqTextCopy">Copy</button>
+        <button class="btn on" id="eqTextApply">Apply to EQ</button>
+      </div>
     </div>
   </div>
 
-  <div class="modal hidden" id="modalExport">
+  <div class="modal hidden" id="modalBackup">
     <div class="mhead">
-      <div><div class="mtitle">Export EQ</div><div class="msub">squig.link / Equalizer APO parametric text for the active bands.</div></div>
+      <div><div class="mtitle">Backup</div><div class="msub">Save all your saved EQs and FR curves to one file, or restore from one. Handy for moving between machines.</div></div>
       <button class="winbtn" data-close title="Close">✕</button>
     </div>
-    <textarea id="expText" readonly></textarea>
-    <div class="row" style="justify-content:flex-end">
-      <button class="btn" id="copyBtn">Copy</button>
+    <div style="font:12.5px/1.5 'IBM Plex Sans',sans-serif; color:var(--muted)">
+      Back up saves all your EQs and FR curves to a <span class="mono">.json</span> file wherever you choose. Restore merges a backup file back in (nothing is overwritten unless the names match).
+    </div>
+    <div id="backupMsg" class="backupmsg"></div>
+    <div class="row" style="justify-content:flex-end; gap:8px">
+      <button class="btn" id="backupRestore">Restore…</button>
+      <button class="btn on" id="backupExport">Back up now</button>
+    </div>
+    <input type="file" id="backupFile" accept=".json" style="display:none">
+  </div>
+
+  <div class="modal hidden" id="modalFitCfg">
+    <div class="mhead">
+      <div><div class="mtitle">Auto-fit settings</div><div class="msub">Limit the fit to a frequency range and a number of bands. Bands beyond the limit are left flat for you to use by hand — handy when a rig measures poorly up top (e.g. 711 above ~6 kHz).</div></div>
+      <button class="winbtn" data-close title="Close">✕</button>
+    </div>
+    <div class="fitcfg">
+      <div class="fitcfg-row"><label>Low bound</label><input type="number" id="fitLow" min="20" max="20000" step="10"><span class="muted">Hz</span></div>
+      <div class="fitcfg-row"><label>High bound</label><input type="number" id="fitHigh" min="20" max="20000" step="10"><span class="muted">Hz</span></div>
+      <div class="fitcfg-row"><label>Bands to fit</label><input type="number" id="fitBands" min="1" max="9" step="1"><span class="muted">of 9</span></div>
+    </div>
+    <div class="row" style="justify-content:space-between">
+      <button class="btn" id="fitCfgReset">Reset</button>
+      <button class="btn on" id="fitCfgDone">Done</button>
     </div>
   </div>
 
@@ -364,15 +442,53 @@
 
   <div class="modal hidden" id="modalAbout">
     <div class="mhead">
-      <div><div class="mtitle">FreeDSP Studio</div><div class="msub">v0.1.0 · open-source EQ editor for Moondrop DSP cables</div></div>
+      <div><div class="mtitle">FreeDSP Studio</div><div class="msub">v0.2.0 · open-source EQ editor for Moondrop DSP cables</div></div>
       <button class="winbtn" data-close title="Close">✕</button>
     </div>
     <div style="font:12.5px/1.5 'IBM Plex Sans',sans-serif; color:var(--muted)">
       Read, edit and write the on-cable 9-band parametric EQ. Independent project, not affiliated with or endorsed by Moondrop. If it's useful to you, a coffee is always appreciated ☕
     </div>
+    <div style="font:11px/1.5 'IBM Plex Mono',monospace; color:var(--faint)">Auto-fit uses the approach from AutoEq by Jaakko Pasanen (MIT).</div>
     <div class="row" style="gap:8px; margin-top:2px">
       <button class="btn on" id="aboutCoffee">☕ Buy me a coffee</button>
       <button class="btn" id="aboutGithub">GitHub</button>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modalFr">
+    <div class="mhead">
+      <div><div class="mtitle">Measurement &amp; target</div><div class="msub">Import your own FR files (frequency / dB text), then pick a measurement and a target. Everything is saved for next time.</div></div>
+      <button class="winbtn" data-close title="Close">✕</button>
+    </div>
+    <div class="fr-rigbar">
+      <span class="seclabel">Rig</span>
+      <div class="rigtoggle" id="rigToggle">
+        <button data-rig="5128" class="on">5128</button>
+        <button data-rig="711">711</button>
+        <button data-rig="other">other</button>
+      </div>
+      <span class="muted" style="font-size:11px">kept separate so they can't be mixed</span>
+    </div>
+    <div class="fr-row">
+      <div class="fr-col">
+        <span class="seclabel">Measurement</span>
+        <span class="fr-hint">Your IEM's measured response, e.g. a DUSK or MAY curve.</span>
+        <div class="fr-list" id="measList"></div>
+        <button class="btn" id="measImport">Import measurements…</button>
+        <input type="file" id="measFile" accept=".txt,.csv,.tab" multiple style="display:none">
+      </div>
+      <div class="fr-col">
+        <span class="seclabel">Target</span>
+        <span class="fr-hint">What you're tuning toward, e.g. JM-1, DF or Harman.</span>
+        <div class="fr-list" id="tgtList"></div>
+        <button class="btn" id="tgtImport">Import targets…</button>
+        <input type="file" id="tgtFile" accept=".txt,.csv,.tab" multiple style="display:none">
+      </div>
+    </div>
+    <div id="frMsg"></div>
+    <div class="row" style="justify-content:space-between">
+      <button class="btn" id="frClear">Clear selection</button>
+      <button class="btn on" id="frShow">Show FR view</button>
     </div>
   </div>
 </div>
@@ -401,7 +517,17 @@
     save: function(data){ return invoke('saved_save', { data: data }); }
   };
   window.app = {
-    openUrl: function(url){ return invoke('open_url', { url: url }); }
+    openUrl: function(url){ return invoke('open_url', { url: url }); },
+    backupWrite: function(path, data){ return invoke('backup_write', { path: path, data: data }); },
+    saveDialog: function(opts){
+      var d = window.__TAURI__ && window.__TAURI__.dialog;
+      if(d && d.save) return d.save(opts);
+      return invoke('plugin:dialog|save', { options: opts });
+    }
+  };
+  window.frs = {
+    load: function(){ return invoke('frs_load'); },
+    save: function(data){ return invoke('frs_save', { data: data }); }
   };
 })();
 </script>
@@ -431,6 +557,11 @@ const TYPE_CYCLE = ['PK','LSQ','HSQ'];
 
 // ---- state ----
 let model = [];
+let graphMode = 'eq';                     // 'eq' or 'fr'
+let frCache = { meas:{}, targets:{} };    // name -> {rig, points:[[freq,db]...]}
+let curMeas = null, curTgt = null;        // selected names
+let activeRig = '5128';                   // 5128 / 711 / other — lists are filtered to this so rigs can't mix
+let fitCfg = { fLow:20, fHigh:20000, bands:9 };   // auto-fit bounds + band budget (persisted)
 let preamp = 0;
 let hiGain = false;   // "+6 dB mode", raises the per-band gain cap
 let gCeil = 6;        // ceiling used when +6 dB mode is on
@@ -492,6 +623,7 @@ function drawGraph(){
         accent=css.getPropertyValue('--accent'), bandLine=css.getPropertyValue('--band-line'),
         faint=css.getPropertyValue('--faint'), accentFill=css.getPropertyValue('--accent-fill');
   const x=(f)=> fToX(f)*W, y=(db)=> dbToY(db)*H;
+  if(graphMode==='fr' && curMeas && frCache.meas[curMeas]){ drawFR(ctx,W,H,css,x); return; }
   // vertical gridlines + labels
   ctx.lineWidth=1; ctx.fillStyle=faint; ctx.font="10px 'IBM Plex Mono',monospace";
   [20,50,100,200,500,1000,2000,5000,10000,20000].forEach(f=>{ const px=x(f); ctx.strokeStyle=gridLine;
@@ -528,6 +660,250 @@ function updateClip(){
 function refreshCurve(){ syncPreampUI(); drawGraph(); updateClip(); }
 function syncHiGainUI(){ $('hiGainBtn').classList.toggle('on', hiGain); }
 
+// ---- frequency-response view (import your own measurement + target files) ----
+// A measurement/target file is just "freq  dB" per line (squig / AutoEQ style).
+function parseFR(text){
+  const pts=[];
+  for(const ln of String(text).split(/\r?\n/)){
+    const m=ln.trim().match(/^(-?[\d.]+)[\s,;]+(-?[\d.eE+]+)/);
+    if(!m) continue;
+    const f=parseFloat(m[1]), d=parseFloat(m[2]);
+    if(f>0 && isFinite(f) && isFinite(d)) pts.push([f,d]);
+  }
+  pts.sort((a,b)=>a[0]-b[0]);
+  return pts;
+}
+function interpFR(pts, f){
+  if(!pts || !pts.length) return 0;
+  if(f<=pts[0][0]) return pts[0][1];
+  const last=pts[pts.length-1]; if(f>=last[0]) return last[1];
+  let lo=0, hi=pts.length-1;
+  while(hi-lo>1){ const mid=(lo+hi)>>1; if(pts[mid][0]<f) lo=mid; else hi=mid; }
+  const [f0,d0]=pts[lo], [f1,d1]=pts[hi];
+  const t=(Math.log(f)-Math.log(f0))/(Math.log(f1)-Math.log(f0));
+  return d0+(d1-d0)*t;
+}
+function normalizeFR(pts){ const at1k=interpFR(pts,1000); return pts.map(p=>[p[0], p[1]-at1k]); }
+
+function drawFR(ctx,W,H,css,x){
+  const gridLine=css.getPropertyValue('--grid-line'), accent=css.getPropertyValue('--accent'),
+        faint=css.getPropertyValue('--faint'), band=css.getPropertyValue('--band-line'),
+        pos=css.getPropertyValue('--pos'), ink=css.getPropertyValue('--ink-2');
+  const meas=frCache.meas[curMeas].points;
+  const tgt = tgtRec() ? tgtRec().points : null;
+  const eq1k=combinedAt(1000);
+  const result=(f)=> interpFR(meas,f) + combinedAt(f) - eq1k;   // EQ'd, re-normalised at 1 kHz
+  // auto y-range over the visible curves
+  let lo=Infinity, hi=-Infinity;
+  for(let px=0;px<=W;px+=4){ const f=20*Math.pow(1000,px/W);
+    const vs=[interpFR(meas,f), result(f)]; if(tgt) vs.push(interpFR(tgt,f));
+    for(const v of vs){ if(v<lo)lo=v; if(v>hi)hi=v; } }
+  lo=Math.floor((lo-4)/5)*5; hi=Math.ceil((hi+4)/5)*5; if(hi-lo<20) hi=lo+20;
+  const y=(db)=> H-((db-lo)/(hi-lo))*H;
+  // gridlines
+  ctx.lineWidth=1; ctx.font="10px 'IBM Plex Mono',monospace"; ctx.strokeStyle=gridLine; ctx.fillStyle=faint;
+  [20,50,100,200,500,1000,2000,5000,10000,20000].forEach(f=>{ const px=x(f); ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,H); ctx.stroke(); ctx.fillText(f>=1000?(f/1000)+'k':f, px+6, H-7); });
+  for(let db=lo; db<=hi; db+=5){ const py=y(db); ctx.strokeStyle=gridLine; ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(W,py); ctx.stroke(); ctx.fillStyle=faint; ctx.fillText(db, 9, py-3); }
+  const curve=(fn,color,width,dash)=>{ ctx.setLineDash(dash||[]); ctx.strokeStyle=color; ctx.lineWidth=width;
+    ctx.beginPath(); for(let px=0;px<=W;px+=1){ const f=20*Math.pow(1000,px/W); const v=fn(f); px===0?ctx.moveTo(px,y(v)):ctx.lineTo(px,y(v)); } ctx.stroke(); ctx.setLineDash([]); };
+  curve((f)=>interpFR(meas,f), band, 1.5);           // raw measurement
+  if(tgt) curve((f)=>interpFR(tgt,f), pos, 2, [6,4]); // target (dashed)
+  curve(result, accent, 2.5);                         // EQ'd result
+  // legend
+  ctx.font="10px 'IBM Plex Mono',monospace"; ctx.textBaseline='middle';
+  let lx=14; const ly=14;
+  const leg=(label,color,dash)=>{ ctx.setLineDash(dash||[]); ctx.strokeStyle=color; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(lx+16,ly); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=ink; ctx.fillText(label, lx+21, ly); lx += 21 + ctx.measureText(label).width + 16; };
+  leg('measurement', band); if(tgt) leg('target', pos, [6,4]); leg('with EQ', accent);
+  ctx.textBaseline='alphabetic';
+}
+
+// import / storage. Measurements and targets are tagged by rig; the lists only ever
+// show the active rig, so a 711 measurement can't be paired with a 5128 target.
+function persistFrs(){ try{ window.frs.save(JSON.stringify({meas:frCache.meas, targets:frCache.targets, curMeas, curTgt, rig:activeRig})).catch(function(e){ log('FR save failed: '+e); }); }catch(e){} }
+async function initFrs(){
+  try{ const raw=await window.frs.load(); const o=raw?JSON.parse(raw):{};
+    frCache={ meas:o.meas||{}, targets:o.targets||{} }; curMeas=o.curMeas||null; curTgt=o.curTgt||null; activeRig=o.rig||'5128';
+  }catch(e){ frCache={meas:{},targets:{}}; curMeas=null; curTgt=null; activeRig='5128'; }
+  if(curTgt && !curTgt.startsWith('t:') && !curTgt.startsWith('m:')) curTgt = frCache.targets[curTgt] ? 't:'+curTgt : null; // migrate old plain-name targets
+  if(curMeas && (!frCache.meas[curMeas] || frCache.meas[curMeas].rig!==activeRig)) curMeas=null;
+  if(curTgt && (!tgtRec() || tgtRec().rig!==activeRig)) curTgt=null;
+  syncRigToggle(); renderFrLists();
+}
+function syncRigToggle(){ document.querySelectorAll('#rigToggle button, #rigToggleInline button').forEach(b=>b.classList.toggle('on', b.dataset.rig===activeRig)); }
+// The current target can be an actual target ('t:name') or a measurement used as a target ('m:name').
+function tgtRec(){ if(!curTgt) return null; if(curTgt.startsWith('t:')) return frCache.targets[curTgt.slice(2)]||null; if(curTgt.startsWith('m:')) return frCache.meas[curTgt.slice(2)]||null; return frCache.targets[curTgt]||null; }
+function fillMeasSel(){
+  const sel=$('measSel'); if(!sel) return; sel.innerHTML='';
+  const names=Object.keys(frCache.meas).filter(n=>frCache.meas[n].rig===activeRig);
+  if(!names.length){ const o=new Option('(import a measurement)',''); o.selected=true; sel.add(o); }
+  names.forEach(n=>{ const o=new Option(n,n); if(n===curMeas)o.selected=true; sel.add(o); });
+  sel.add(new Option('Import…','__import__'));
+}
+function fillTgtSel(){
+  const sel=$('tgtSel'); if(!sel) return; sel.innerHTML='';
+  const none=new Option('— no target —',''); if(!curTgt)none.selected=true; sel.add(none);
+  const tgts=Object.keys(frCache.targets).filter(n=>frCache.targets[n].rig===activeRig);
+  const meas=Object.keys(frCache.meas).filter(n=>frCache.meas[n].rig===activeRig && n!==curMeas);
+  if(tgts.length){ const g=document.createElement('optgroup'); g.label='Targets'; tgts.forEach(n=>{ const o=new Option(n,'t:'+n); if(curTgt==='t:'+n)o.selected=true; g.appendChild(o); }); sel.appendChild(g); }
+  if(meas.length){ const g=document.createElement('optgroup'); g.label='Other measurements'; meas.forEach(n=>{ const o=new Option(n,'m:'+n); if(curTgt==='m:'+n)o.selected=true; g.appendChild(o); }); sel.appendChild(g); }
+  sel.add(new Option('Import target…','__import__'));
+}
+function setFrRig(rig){
+  if(rig===activeRig) return;
+  activeRig=rig;
+  if(curMeas && (!frCache.meas[curMeas] || frCache.meas[curMeas].rig!==rig)) curMeas=null;
+  if(curTgt && (!tgtRec() || tgtRec().rig!==rig)) curTgt=null;
+  syncRigToggle(); renderFrLists(); persistFrs();
+  if(graphMode==='fr'){ if(curMeas) drawGraph(); else setGraphMode('eq'); }
+}
+function importFR(kind, files){
+  const list=Array.from(files||[]); if(!list.length) return;
+  let done=0, ok=0, last='';
+  list.forEach(file=>{
+    const rdr=new FileReader();
+    rdr.onload=()=>{
+      const pts=normalizeFR(parseFR(rdr.result));
+      if(pts.length>=4){ const name=(file.name||'imported').replace(/\.[^.]+$/,'').replace(/\s*\[[^\]]*\]\s*$/,'').trim() || 'imported';
+        (kind==='meas'?frCache.meas:frCache.targets)[name]={ rig:activeRig, points:pts }; ok++; last=name;
+        if(kind==='meas') curMeas=name; else curTgt='t:'+name; }
+      if(++done===list.length){
+        $('frMsg').textContent = ok ? (ok===1 ? `Loaded "${last}" (${activeRig}).` : `Imported ${ok} ${kind==='meas'?'measurement':'target'}(s) (${activeRig}).`) : 'No valid freq/dB points found.';
+        persistFrs(); renderFrLists(); if(graphMode==='fr') drawGraph();
+      }
+    };
+    rdr.readAsText(file);
+  });
+}
+function frRow(name, isCur){ const row=document.createElement('div'); row.className='saved'+(isCur?' fr-cur':''); row.innerHTML=`<span class="sname">${name}</span><span class="sdel" title="Delete">✕</span>`; return row; }
+function renderFrLists(){
+  const mbox=$('measList');
+  if(mbox){ mbox.innerHTML='';
+    const names=Object.keys(frCache.meas).filter(n=>frCache.meas[n].rig===activeRig);
+    if(!names.length) mbox.innerHTML='<div class="savedempty">None for '+activeRig+' yet.</div>';
+    names.forEach(n=>{ const row=frRow(n, n===curMeas);
+      row.onclick=()=>{ curMeas=n; if(curTgt==='m:'+n) curTgt=null; persistFrs(); renderFrLists(); if(graphMode==='fr') drawGraph(); };
+      row.querySelector('.sdel').onclick=(e)=>{ e.stopPropagation(); delete frCache.meas[n]; if(curMeas===n)curMeas=null; if(curTgt==='m:'+n)curTgt=null; persistFrs(); renderFrLists(); if(graphMode==='fr') drawGraph(); };
+      mbox.appendChild(row); });
+  }
+  const tbox=$('tgtList');
+  if(tbox){ tbox.innerHTML='';
+    const names=Object.keys(frCache.targets).filter(n=>frCache.targets[n].rig===activeRig);
+    if(!names.length) tbox.innerHTML='<div class="savedempty">None for '+activeRig+' yet.</div>';
+    names.forEach(n=>{ const row=frRow(n, curTgt==='t:'+n);
+      row.onclick=()=>{ curTgt='t:'+n; persistFrs(); renderFrLists(); if(graphMode==='fr') drawGraph(); };
+      row.querySelector('.sdel').onclick=(e)=>{ e.stopPropagation(); delete frCache.targets[n]; if(curTgt==='t:'+n)curTgt=null; persistFrs(); renderFrLists(); if(graphMode==='fr') drawGraph(); };
+      tbox.appendChild(row); });
+  }
+  fillMeasSel(); fillTgtSel();
+}
+function setGraphMode(m){
+  if(m==='fr' && !curMeas){ openModal('modalFr'); return; }   // need a measurement first
+  graphMode=m;
+  $('modeEq').classList.toggle('on', m==='eq'); $('modeFr').classList.toggle('on', m==='fr');
+  nodeEls.forEach(n=>{ n.style.display = m==='fr' ? 'none' : ''; });
+  $('graphCard').style.cursor = m==='fr' ? 'default' : 'crosshair';
+  drawGraph();
+}
+
+// ---- auto-fit the 9 bands to (target - measurement) ----
+// Ports AutoEq's approach (Jaakko Pasanen, MIT): matching-pursuit init + MSE loss with a
+// sharpness penalty and "only average energy above 10 kHz", adapted to our fixed 9 bands and
+// gain limits (SLSQP -> per-parameter golden-section coordinate descent, all in JS).
+const FIT_N = 180;
+function loadFitCfg(){ try{ const o=JSON.parse(localStorage.getItem('dsp-fitcfg')||'{}'); fitCfg={ fLow:o.fLow||20, fHigh:o.fHigh||20000, bands:o.bands||9 }; }catch(e){} syncFitCfgUI(); }
+function saveFitCfg(){ try{ localStorage.setItem('dsp-fitcfg', JSON.stringify(fitCfg)); }catch(e){} }
+function syncFitCfgUI(){ if($('fitLow')){ $('fitLow').value=fitCfg.fLow; $('fitHigh').value=fitCfg.fHigh; $('fitBands').value=fitCfg.bands; } }
+function fitGridErr(){                 // the correction the EQ should produce
+  const meas=frCache.meas[curMeas].points, tgt=tgtRec().points;
+  const fs=[], err=[];
+  for(let i=0;i<=FIT_N;i++){ const f=20*Math.pow(1000,i/FIT_N); fs.push(f); err.push(interpFR(tgt,f)-interpFR(meas,f)); }
+  return {fs, err};
+}
+function respExcept(bands,k,fs){
+  const o=new Array(fs.length);
+  for(let i=0;i<fs.length;i++){ let s=0; for(let j=0;j<bands.length;j++){ if(j!==k && bands[j].gain) s+=magDb(bands[j],fs[i]); } o[i]=s; }
+  return o;
+}
+function sharpPenalty(b){ return b.q>4 ? 0.0006*(b.q-4)*(b.q-4)*(b.gain*b.gain+1) : 0; }
+function fitLoss(bandK, others, fs, err){
+  const lo=fitCfg.fLow, hi=fitCfg.fHigh;
+  let se=0, cnt=0, mE=0, mC=0, hc=0;
+  for(let i=0;i<fs.length;i++){
+    const f=fs[i]; if(f<lo || f>hi) continue;               // only fit within the configured range
+    const comb=others[i]+(bandK.gain?magDb(bandK,f):0);
+    if(f>10000){ mE+=err[i]; mC+=comb; hc++; }               // above 10 kHz: average energy only
+    else { const d=err[i]-comb; se+=d*d; cnt++; }
+  }
+  let loss=cnt?se/cnt:0; if(hc){ const d=(mE-mC)/hc; loss+=d*d; }
+  return loss + sharpPenalty(bandK);
+}
+function optParam(bands,k,param,lo,hi,fs,err,logScale){
+  const b=bands[k], others=respExcept(bands,k,fs);
+  const set=(v)=>{ if(param==='freq') b.freq=Math.round(clamp(v,lo,hi)); else if(param==='gain') b.gain=clamp(Math.round(v*10)/10,lo,hi); else b.q=clamp(Math.round(v*100)/100,lo,hi); };
+  let a=logScale?Math.log(lo):lo, c=logScale?Math.log(hi):hi; const toV=(x)=>logScale?Math.exp(x):x;
+  const ev=(x)=>{ set(toV(x)); return fitLoss(b,others,fs,err); };
+  const gr=(Math.sqrt(5)-1)/2; let x1=c-gr*(c-a), x2=a+gr*(c-a), f1=ev(x1), f2=ev(x2);
+  for(let it=0;it<16;it++){ if(f1<f2){ c=x2; x2=x1; f2=f1; x1=c-gr*(c-a); f1=ev(x1);} else { a=x1; x1=x2; f1=f2; x2=a+gr*(c-a); f2=ev(x2);} }
+  set(toV((a+c)/2));
+}
+function autoFit(){
+  if(!curMeas || !tgtRec()) return false;
+  const {fs, err}=fitGridErr();
+  const gMax=curGMax();
+  const nB=clamp(Math.round(fitCfg.bands)||NB,1,NB);
+  let fLo=Math.max(LIM.fMin, fitCfg.fLow), fHi=Math.min(LIM.fMax, fitCfg.fHigh);
+  if(fHi<=fLo){ fLo=LIM.fMin; fHi=LIM.fMax; }               // guard against a bad range
+  // matching-pursuit init: place each band on the biggest remaining error (within range), subtract, repeat
+  const bands=[]; const resid=err.slice();
+  for(let k=0;k<nB;k++){
+    let bi=-1, bv=0; for(let i=0;i<fs.length;i++){ if(fs[i]<fLo||fs[i]>fHi) continue; if(Math.abs(resid[i])>Math.abs(bv)){ bv=resid[i]; bi=i; } }
+    if(bi<0) break;
+    const band={ freq:Math.round(clamp(fs[bi],fLo,fHi)), gain:clamp(Math.round(bv*10)/10,LIM.gMin,gMax), q:1.4, type:'PK' };
+    bands.push(band);
+    for(let i=0;i<fs.length;i++) resid[i]-=magDb(band,fs[i]);
+  }
+  // coordinate-descent refinement (freq stays within the configured range)
+  for(let round=0;round<6;round++){
+    for(let k=0;k<bands.length;k++){
+      optParam(bands,k,'gain',LIM.gMin,gMax,fs,err);
+      optParam(bands,k,'q',LIM.qMin,LIM.qMax,fs,err);
+      optParam(bands,k,'freq',fLo,fHi,fs,err,true);
+    }
+  }
+  bands.sort((a,b)=>a.freq-b.freq);
+  pushUndo();
+  model=fill9(bands);
+  const {p}=peak(); preamp = p>0 ? -(Math.ceil(p*10)/10) : 0;   // headroom
+  renderAll();
+  return true;
+}
+
+// ---- backup: saved EQs + FR curves in one file ----
+async function exportBackup(){
+  const data = JSON.stringify({ version:1, eqs: loadSaved(), frs:{ meas:frCache.meas, targets:frCache.targets, rig:activeRig } }, null, 2);
+  try{
+    const path = await window.app.saveDialog({ defaultPath:'freedsp-backup.json', filters:[{name:'JSON', extensions:['json']}] });
+    if(!path) return;                       // cancelled
+    await window.app.backupWrite(path, data);
+    log('backup written: '+path); flashBackup('Backup saved');
+  }catch(e){ log('backup failed: '+e); flashBackup('Backup failed'); }
+}
+function importBackup(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    try{ const o=JSON.parse(r.result); let neq=0,nfr=0;
+      if(o.eqs && typeof o.eqs==='object'){ const cur=loadSaved(); for(const k in o.eqs){ cur[k]=o.eqs[k]; neq++; } storeSaved(cur); renderSaved(); }
+      if(o.frs){ if(o.frs.meas) for(const k in o.frs.meas){ frCache.meas[k]=o.frs.meas[k]; nfr++; }
+        if(o.frs.targets) for(const k in o.frs.targets){ frCache.targets[k]=o.frs.targets[k]; nfr++; } persistFrs(); renderFrLists(); }
+      flashBackup(`Restored ${neq} EQ(s), ${nfr} FR(s)`);
+    }catch(e){ log('restore failed: '+e); flashBackup('Restore failed, not a valid backup'); }
+  };
+  r.readAsText(file);
+}
+function flashBackup(msg){ const el=$('backupMsg'); if(el){ el.textContent=msg; setTimeout(()=>{ if(el.textContent===msg) el.textContent=''; }, 2600); } }
+
 // ---- graph nodes (draggable, layered over the canvas) ----
 let nodeEls=[];
 function renderNodes(){
@@ -541,6 +917,7 @@ function renderNodes(){
 }
 function positionNodes(){
   model.forEach((b,i)=>{ const n=nodeEls[i]; if(!n) return;
+    n.style.display = graphMode==='fr' ? 'none' : '';
     n.style.left = clamp(fToX(b.freq),0,1)*100 + '%';
     n.style.top  = clamp(dbToY(b.gain)*100, 2, 98).toFixed(2) + '%';
     n.classList.toggle('active', !!b.gain);
@@ -633,11 +1010,19 @@ function parseSquig(text){
   }
   return {preamp:pre, filters, skipped};
 }
-function doImport(){
-  const {preamp:filePreamp,filters,skipped}=parseSquig($('impText').value);
-  if(!filters.length){ $('impMsg').textContent='No enabled "Filter N: ON ..." lines found.'; return; }
+// The EQ-as-text box works both ways: it's populated from the current EQ, and Apply parses it back.
+function eqToText(){
+  const active = model.filter(b=>b.gain!==0);
+  const lines=[`Preamp: ${preamp.toFixed(1)} dB`];
+  active.forEach((b,i)=> lines.push(`Filter ${i+1}: ON ${RTYPE[b.type]||'PK'} Fc ${b.freq} Hz Gain ${b.gain.toFixed(1)} dB Q ${b.q.toFixed(3)}`));
+  return lines.join('\n');
+}
+function openEqText(){ $('eqText').value=eqToText(); $('eqTextMsg').textContent=''; openModal('modalEqText'); }
+function applyEqText(){
+  const {preamp:filePreamp,filters,skipped}=parseSquig($('eqText').value);
+  if(!filters.length){ $('eqTextMsg').textContent='No enabled "Filter N: ON ..." lines found.'; return; }
   ensureCeilFor(Math.max(0, ...filters.map(f=>f.gain)));
-  const warns=[]; if(filters.length>NB) warns.push(`file had ${filters.length} filters, kept first ${NB}`);
+  const warns=[]; if(filters.length>NB) warns.push(`had ${filters.length} filters, kept first ${NB}`);
   const clamped=filters.slice(0,NB).map(f=>{
     let {freq,gain,q,type}=f;
     if(freq<LIM.fMin||freq>LIM.fMax){ freq=clamp(freq,LIM.fMin,LIM.fMax); warns.push('freq clamped'); }
@@ -649,18 +1034,11 @@ function doImport(){
   model = fill9(clamped);
   preamp = Math.round(clamp(filePreamp,-20,0)*10)/10;
   const flat = NB - clamped.length;
-  let msg = `Loaded ${clamped.length} filter(s)${flat?`, ${flat} slot(s) flat`:''}. Preamp ${preamp.toFixed(1)} dB applied.`;
+  let msg = `Applied ${clamped.length} filter(s)${flat?`, ${flat} slot(s) flat`:''}. Preamp ${preamp.toFixed(1)} dB.`;
   if(skipped) msg += ` ${skipped} disabled skipped.`;
   if(warns.length) msg += '  ⚠ '+[...new Set(warns)].join(', ');
-  $('impMsg').textContent = msg;
+  $('eqTextMsg').textContent = msg;
   renderAll();
-}
-function doExport(){
-  const active = model.filter(b=>b.gain!==0);
-  const lines=[`Preamp: ${preamp.toFixed(1)} dB`];
-  active.forEach((b,i)=> lines.push(`Filter ${i+1}: ON ${RTYPE[b.type]||'PK'} Fc ${b.freq} Hz Gain ${b.gain.toFixed(1)} dB Q ${b.q.toFixed(3)}`));
-  $('expText').value = lines.join('\n');
-  openModal('modalExport');
 }
 
 // ---- saved EQs (+ built-in DUSK starting points) ----
@@ -799,8 +1177,8 @@ async function disconnect(){ try{ await window.dsp.close(); }catch(e){}
   $('devName').textContent='FreeDSP Studio'; show('connect',true); $('connectTitle').textContent='Looking for a cable…'; }
 
 // ---- modals ----
-function openModal(id){ show('overlay',true); ['modalImport','modalExport','modalLog','modalClip','modalAbout'].forEach(m=>show(m, m===id)); }
-function closeModal(){ show('overlay',false); ['modalImport','modalExport','modalLog','modalClip','modalAbout'].forEach(m=>show(m,false)); }
+function openModal(id){ show('overlay',true); ['modalEqText','modalBackup','modalLog','modalClip','modalAbout','modalFr','modalFitCfg'].forEach(m=>show(m, m===id)); }
+function closeModal(){ show('overlay',false); ['modalEqText','modalBackup','modalLog','modalClip','modalAbout','modalFr','modalFitCfg'].forEach(m=>show(m,false)); }
 function flashLink(el,txt){ const o=el.textContent; el.textContent=txt; setTimeout(()=>{el.textContent=o;},1100); }
 
 // ---- theme ----
@@ -830,14 +1208,39 @@ window.addEventListener('DOMContentLoaded', ()=>{
   $('writeBtn').onclick=writeToCable;
   $('linkRead').onclick=async ()=>{ await readFromCable(); flashLink($('linkRead'),'read ✓'); show('readNote',true); };
   $('readNoteX').onclick=()=>show('readNote',false);
-  $('linkImport').onclick=()=>{ openModal('modalImport'); $('impMsg').textContent=''; $('impText').focus(); };
-  $('linkExport').onclick=doExport;
+  $('linkBackup').onclick=()=>{ openModal('modalBackup'); $('backupMsg').textContent=''; };
+  $('eqTextBtn').onclick=openEqText;
   $('linkLog').onclick=()=>openModal('modalLog');
   $('linkAbout').onclick=()=>openModal('modalAbout');
   $('aboutCoffee').onclick=()=>window.app.openUrl('https://buymeacoffee.com/effectiveequivalent');
-  $('aboutGithub').onclick=()=>window.app.openUrl('https://github.com/EffectiveEquivalent/freedsp-studio');
-  $('impBtn').onclick=doImport;
-  $('copyBtn').onclick=()=>{ const t=$('expText'); t.select(); try{ document.execCommand('copy'); }catch(e){} flashLink($('copyBtn'),'Copied'); };
+  $('aboutGithub').onclick=()=>window.app.openUrl('https://github.com/EffectiveEquivalent/FreeDSP-Studio');
+  // FR view
+  $('linkFr').onclick=()=>{ openModal('modalFr'); $('frMsg').textContent=''; };
+  $('modeEq').onclick=()=>setGraphMode('eq');
+  $('modeFr').onclick=()=>setGraphMode('fr');
+  document.querySelectorAll('#rigToggle button, #rigToggleInline button').forEach(b=>b.onclick=()=>setFrRig(b.dataset.rig));
+  $('measSel').onchange=(e)=>{ const v=e.target.value; if(v==='__import__'){ renderFrLists(); openModal('modalFr'); return; } curMeas=v||null; persistFrs(); renderFrLists(); if(graphMode==='fr') drawGraph(); };
+  $('tgtSel').onchange=(e)=>{ const v=e.target.value; if(v==='__import__'){ renderFrLists(); openModal('modalFr'); return; } curTgt=v||null; persistFrs(); renderFrLists(); if(graphMode==='fr') drawGraph(); };
+  $('measImport').onclick=()=>$('measFile').click();
+  $('tgtImport').onclick=()=>$('tgtFile').click();
+  $('measFile').onchange=(e)=>{ if(e.target.files.length) importFR('meas', e.target.files); e.target.value=''; };
+  $('tgtFile').onchange=(e)=>{ if(e.target.files.length) importFR('tgt', e.target.files); e.target.value=''; };
+  $('frClear').onclick=()=>{ curMeas=null; curTgt=null; persistFrs(); renderFrLists(); setGraphMode('eq'); };
+  $('frShow').onclick=()=>{ if(!curMeas){ $('frMsg').textContent='Import a measurement first.'; return; } closeModal(); setGraphMode('fr'); };
+  $('autoFitBtn').onclick=()=>{ if(!curMeas || !tgtRec()){ openModal('modalFr'); $('frMsg').textContent='Pick a measurement and a target, then Auto-fit.'; return; }
+    autoFit(); setGraphMode('fr'); };
+  $('fitCfgBtn').onclick=()=>{ syncFitCfgUI(); openModal('modalFitCfg'); };
+  $('fitLow').onchange=()=>{ fitCfg.fLow=clamp(Math.round(+$('fitLow').value)||20,20,20000); saveFitCfg(); syncFitCfgUI(); };
+  $('fitHigh').onchange=()=>{ fitCfg.fHigh=clamp(Math.round(+$('fitHigh').value)||20000,20,20000); saveFitCfg(); syncFitCfgUI(); };
+  $('fitBands').onchange=()=>{ fitCfg.bands=clamp(Math.round(+$('fitBands').value)||9,1,9); saveFitCfg(); syncFitCfgUI(); };
+  $('fitCfgReset').onclick=()=>{ fitCfg={fLow:20,fHigh:20000,bands:9}; saveFitCfg(); syncFitCfgUI(); };
+  $('fitCfgDone').onclick=closeModal;
+  // backup / restore
+  $('backupExport').onclick=exportBackup;
+  $('backupRestore').onclick=()=>$('backupFile').click();
+  $('backupFile').onchange=(e)=>{ if(e.target.files[0]) importBackup(e.target.files[0]); e.target.value=''; };
+  $('eqTextApply').onclick=applyEqText;
+  $('eqTextCopy').onclick=()=>{ const t=$('eqText'); t.select(); try{ document.execCommand('copy'); }catch(e){} flashLink($('eqTextCopy'),'Copied'); };
   // clip-warning dialog
   $('clipCancel').onclick=closeModal;
   $('clipAccept').onclick=()=>{ closeModal(); doWrite(); };
@@ -850,6 +1253,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
   window.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && !$('overlay').classList.contains('hidden')) closeModal(); });
 
   initSaved();
+  initFrs();
+  loadFitCfg();
   window.addEventListener('resize', drawGraph);
   detect();
 });

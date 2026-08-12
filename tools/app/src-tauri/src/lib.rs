@@ -30,6 +30,31 @@ fn open_url(url: String) -> Result<(), String> {
     open::that(url).map_err(|e| e.to_string())
 }
 
+// Saved frequency-response curves (imported measurements + targets), same config dir.
+fn frs_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    let dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir.join("saved-frs.json"))
+}
+
+#[tauri::command]
+fn frs_load(app: tauri::AppHandle) -> Result<String, String> {
+    let p = frs_path(&app)?;
+    Ok(fs::read_to_string(&p).unwrap_or_else(|_| "{}".to_string()))
+}
+
+#[tauri::command]
+fn frs_save(app: tauri::AppHandle, data: String) -> Result<(), String> {
+    let p = frs_path(&app)?;
+    fs::write(&p, data).map_err(|e| e.to_string())
+}
+
+// Write a combined backup (saved EQs + FR curves) to a user-chosen path.
+#[tauri::command]
+fn backup_write(path: String, data: String) -> Result<(), String> {
+    fs::write(&path, data).map_err(|e| e.to_string())
+}
+
 // Run the blocking HID work off the UI thread so writes (~1s of frames) never freeze the window.
 #[cfg(windows)]
 async fn blk<T, F>(f: F) -> Result<T, String>
@@ -93,6 +118,7 @@ fn win_close(window: tauri::WebviewWindow) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             open,
             close,
@@ -104,7 +130,10 @@ pub fn run() {
             win_close,
             saved_load,
             saved_save,
-            open_url
+            open_url,
+            frs_load,
+            frs_save,
+            backup_write
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
