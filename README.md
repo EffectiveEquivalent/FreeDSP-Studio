@@ -6,7 +6,7 @@ I made this because the stock app is clunky, locked to whole-dB steps, and it tu
 
 > Independent project. Nothing to do with Moondrop, not affiliated, not endorsed. For cables you own.
 
-*(Screenshot goes here: the response graph with draggable band nodes.)*
+![FreeDSP Studio — frequency-response view with the EQ auto-fitted to a target](assets/screenshot.png)
 
 ## Download
 
