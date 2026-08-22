@@ -109,6 +109,7 @@ If this saved you from the stock app, you can [buy me a coffee](https://buymeaco
 ## Changelog
 
 ### 0.2.6
+- Fix: crash on macOS while talking to the cable. Every device operation ran on a fresh short-lived thread and re-enumerated the whole HID bus, which drives hidapi's process-global `IOHIDManager` far harder than it is designed for — device operations now run on one long-lived thread, and the bus is only re-enumerated when opening the cable actually fails
 - Fix: the window couldn't be dragged by its title bar on macOS. The title bar drag relied on `-webkit-app-region`, which WebView2 honours on Windows but WKWebView ignores; macOS now uses Tauri's drag region, which also needed the `core:window:allow-start-dragging` permission it had never been granted
 - Double-clicking the title bar now zooms the window on macOS
 
