@@ -267,10 +267,10 @@
 <body>
 <div class="shell">
 
-  <div class="titlebar" data-tauri-drag-region>
-    <div class="mark" data-tauri-drag-region><svg viewBox="0 0 1024 1024" aria-hidden="true"><defs><linearGradient id="mk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b6ef5"/><stop offset="1" stop-color="#34379f"/></linearGradient></defs><rect width="1024" height="1024" fill="url(#mk)"/><path d="M150 588 C 280 588 300 372 448 372 C 566 372 566 664 700 664 C 806 664 828 536 874 536" fill="none" stroke="#fff" stroke-width="74" stroke-linecap="round" stroke-linejoin="round"/><circle cx="448" cy="372" r="62" fill="#fff"/><circle cx="700" cy="664" r="62" fill="#fff"/></svg></div>
-    <span class="devname" id="devName" data-tauri-drag-region>FreeDSP Studio</span>
-    <span class="statuspill hidden" id="statusPill" data-tauri-drag-region><span class="dot"></span><span class="mono" id="statusText"></span></span>
+  <div class="titlebar">
+    <div class="mark"><svg viewBox="0 0 1024 1024" aria-hidden="true"><defs><linearGradient id="mk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b6ef5"/><stop offset="1" stop-color="#34379f"/></linearGradient></defs><rect width="1024" height="1024" fill="url(#mk)"/><path d="M150 588 C 280 588 300 372 448 372 C 566 372 566 664 700 664 C 806 664 828 536 874 536" fill="none" stroke="#fff" stroke-width="74" stroke-linecap="round" stroke-linejoin="round"/><circle cx="448" cy="372" r="62" fill="#fff"/><circle cx="700" cy="664" r="62" fill="#fff"/></svg></div>
+    <span class="devname" id="devName">FreeDSP Studio</span>
+    <span class="statuspill hidden" id="statusPill"><span class="dot"></span><span class="mono" id="statusText"></span></span>
     <div class="tb-right">
       <button class="winbtn hidden" id="disconnectBtn" title="Disconnect">⏏</button>
       <div class="themeswitch">
@@ -1195,6 +1195,13 @@ function setTheme(t){ document.documentElement.dataset.theme=t; try{ localStorag
 window.addEventListener('DOMContentLoaded', ()=>{
   model = blankModel();
   // title strip
+  // Windows drags the title bar via -webkit-app-region, which WebView2 honours and
+  // WKWebView ignores entirely, so macOS needs Tauri's drag region instead. Only macOS:
+  // on Windows a second mechanism would fight the native caption drag. "deep" because
+  // Tauri stops walking at the first element carrying the attribute, so a bare one here
+  // would refuse any click that landed on the logo or the status pill's inner spans.
+  if(document.documentElement.classList.contains('is-mac'))
+    document.querySelector('.titlebar').setAttribute('data-tauri-drag-region','deep');
   $('minBtn').onclick=()=>window.win&&window.win.minimize();
   $('closeBtn').onclick=()=>window.win&&window.win.close();
   $('themeLight').onclick=()=>setTheme('light');

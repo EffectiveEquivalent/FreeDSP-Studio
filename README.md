@@ -108,6 +108,10 @@ If this saved you from the stock app, you can [buy me a coffee](https://buymeaco
 
 ## Changelog
 
+### 0.2.6
+- Fix: the window couldn't be dragged by its title bar on macOS. The title bar drag relied on `-webkit-app-region`, which WebView2 honours on Windows but WKWebView ignores; macOS now uses Tauri's drag region, which also needed the `core:window:allow-start-dragging` permission it had never been granted
+- Double-clicking the title bar now zooms the window on macOS
+
 ### 0.2.5
 - macOS support: universal build for Apple Silicon and Intel
 - HID layer split per platform — Win32 on Windows, hidapi over IOKit on macOS — with the wire protocol, biquad maths and preamp shared between them
