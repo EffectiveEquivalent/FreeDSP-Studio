@@ -1,6 +1,6 @@
 # FreeDSP Studio
 
-An EQ editor for Moondrop's DSP USB-C cables (DUSK-SP, MAY and FreeDSP). It reads whatever EQ is on the cable, lets you edit the 9 parametric bands by dragging points on the response curve, imports from squig.link, and writes it back. Built in Rust with Tauri, so it's a few MB of native app rather than a bundled browser.
+An EQ editor for Moondrop's DSP USB-C cables (DUSK-SP, MAY and FreeDSP). It reads whatever EQ is on the cable, lets you edit the 9 parametric bands by dragging points on the response curve, imports from squig.link, and writes it back. Built in Rust with Tauri, so it's a few MB of native app rather than a bundled browser. Runs on Windows and macOS.
 
 I made this because the stock app is clunky, locked to whole-dB steps, and it turns out the cable can do WAY more than the app lets on.
 
@@ -10,9 +10,24 @@ I made this because the stock app is clunky, locked to whole-dB steps, and it tu
 
 ## Download
 
-Grab `FreeDSP-Studio.exe` from the [latest release](https://github.com/EffectiveEquivalent/FreeDSP-Studio/releases). It's a single portable exe, nothing to install.
+From the [latest release](https://github.com/EffectiveEquivalent/FreeDSP-Studio/releases):
 
-**Heads up: Windows will warn you about it.** The build isn't code-signed yet, so SmartScreen shows "unknown publisher" for any exe it hasn't seen before. That's a reputation check, not a virus detection. Click More info, then Run anyway. If you'd rather not, run it from source instead (below), or wait: signed releases via [SignPath](https://signpath.org) are in the works.
+| | | |
+|---|---|---|
+| **Windows** | `FreeDSP-Studio.exe` | Single portable exe, nothing to install |
+| **macOS** | `FreeDSP-Studio-macOS.dmg` | Universal, runs on Apple Silicon and Intel |
+
+**Heads up: neither build is signed, so your OS will warn you about it.** Signing costs money per year on both platforms and this is a free project.
+
+**Windows** shows a SmartScreen "unknown publisher" warning for any exe it hasn't seen before. That's a reputation check, not a virus detection. Click More info, then Run anyway. Signed releases via [SignPath](https://signpath.org) are in the works.
+
+**macOS** shows "Apple could not verify FreeDSP Studio is free of malware". The app *is* ad-hoc signed, which is what lets it run on Apple Silicon at all, but it isn't notarised, and only notarisation clears that message. To get past it: try to open the app, dismiss the refusal, then go to **System Settings > Privacy & Security**, scroll down, and click **Open Anyway**. Note the old right-click > Open shortcut no longer works on current macOS. If you prefer the terminal:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/FreeDSP Studio.app"
+```
+
+Either way you only do it once. Or run from source (below), which avoids the whole thing.
 
 ## Supported cables
 
@@ -22,7 +37,7 @@ Grab `FreeDSP-Studio.exe` from the [latest release](https://github.com/Effective
 | Moondrop MAY | `35D8:1497` | Standard / Bass Head / Reference / No Bass / Harman |
 | Moondrop FreeDSP | `35D8:1496` | none (custom bank only) |
 
-Windows only for now (the HID layer talks to `hid.dll` directly). A Mac port is planned.
+Windows and macOS. The HID transport is split per platform — Windows goes at `hid.dll` directly, macOS goes through hidapi onto IOKit — so Linux is a small step from here: hidraw supports the same two calls and slots in beside the macOS backend. It needs a udev rule granting access to VID `35d8`, and someone with a cable to test it.
 
 ## What it does
 
@@ -51,7 +66,10 @@ Nerdy footnote: the cable stores a separate coefficient set per sample rate (44.
 
 ## Run from source
 
-You'll need [Node.js](https://nodejs.org/), the [Rust toolchain](https://rustup.rs/), and on Windows the MSVC C++ build tools (Visual Studio or the standalone Build Tools). WebView2 is already on any normal Windows 11 install.
+You'll need [Node.js](https://nodejs.org/) and the [Rust toolchain](https://rustup.rs/), plus:
+
+- **Windows** — the MSVC C++ build tools (Visual Studio or the standalone Build Tools). WebView2 is already on any normal Windows 11 install.
+- **macOS** — the Xcode Command Line Tools (`xcode-select --install`). WKWebView is part of the OS.
 
 ```bash
 git clone https://github.com/EffectiveEquivalent/FreeDSP-Studio.git
@@ -62,12 +80,19 @@ npx tauri dev
 
 ## Build a release
 
+Windows, portable exe into `tools/app/src-tauri/target/release/`:
+
 ```bash
-cd tools/app
-npx tauri build
+npx tauri build --no-bundle
 ```
 
-Output lands in `tools/app/src-tauri/target/release/`. Builds are unsigned for now, so SmartScreen will moan about an unknown publisher. Running from source avoids that entirely.
+macOS, universal .app and .dmg into `tools/app/src-tauri/target/universal-apple-darwin/release/bundle/`:
+
+```bash
+npx tauri build --target universal-apple-darwin --bundles app,dmg
+```
+
+The macOS bundle is ad-hoc signed automatically (`signingIdentity: "-"` in `tauri.macos.conf.json`) — free, no Apple account, and required for the app to launch on Apple Silicon. It is not notarisation, so the Gatekeeper warning above still applies to anything downloaded. Running from source avoids both platforms' warnings entirely.
 
 ## Safety
 
@@ -82,6 +107,12 @@ This is a clean, independent implementation of the wire protocol, written for in
 If this saved you from the stock app, you can [buy me a coffee](https://buymeacoffee.com/effectiveequivalent). No pressure.
 
 ## Changelog
+
+### 0.2.5
+- macOS support: universal build for Apple Silicon and Intel
+- HID layer split per platform — Win32 on Windows, hidapi over IOKit on macOS — with the wire protocol, biquad maths and preamp shared between them
+- Native title bar and traffic lights on macOS
+- macOS builds are ad-hoc signed automatically (free, not notarised, see Download)
 
 ### 0.2.0
 - Frequency-response view (measurement + target + EQ'd result)

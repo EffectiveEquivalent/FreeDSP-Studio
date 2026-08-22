@@ -1,7 +1,9 @@
 name: Release
 
-# Build the portable Windows exe. Push a version tag (e.g. v0.1.0) to cut a
-# release; or run manually from the Actions tab to just get a build artifact.
+# Build the portable Windows exe and the macOS dmg. Push a version tag (e.g. v0.1.0)
+# to cut a release; or run manually from the Actions tab to just get build artifacts.
+# Both jobs attach to the same release. Neither build is signed by a paid certificate:
+# Windows shows a SmartScreen warning, macOS shows a Gatekeeper one.
 on:
   push:
     tags: ['v*']
@@ -49,3 +51,52 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: tools/app/FreeDSP-Studio.exe
+
+  macos:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: tools/app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          # Universal binary, so one download covers Apple Silicon and Intel.
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools/app/src-tauri
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend tooling
+        run: npm ci
+
+      # tauri.macos.conf.json sets signingIdentity "-", so the bundler ad-hoc signs the
+      # .app before it builds the dmg. That's free and needs no Apple account; it is what
+      # lets the app run at all on Apple Silicon. It is NOT notarisation.
+      - name: Build universal dmg
+        run: npx tauri build --target universal-apple-darwin --bundles app,dmg
+
+      - name: Stage artifact
+        run: |
+          dmg=$(ls src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg | head -1)
+          cp "$dmg" FreeDSP-Studio-macOS.dmg
+          codesign --verify --strict --verbose=2 \
+            src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FreeDSP-Studio-macos
+          path: tools/app/FreeDSP-Studio-macOS.dmg
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: tools/app/FreeDSP-Studio-macOS.dmg

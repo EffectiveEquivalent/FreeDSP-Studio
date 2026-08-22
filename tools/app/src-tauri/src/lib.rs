@@ -1,5 +1,11 @@
-#[cfg(windows)]
+mod dsp;
 mod hid;
+
+#[cfg(windows)]
+mod hid_win;
+
+#[cfg(not(windows))]
+mod hid_hidapi;
 
 use std::fs;
 use tauri::Manager;
@@ -56,7 +62,6 @@ fn backup_write(path: String, data: String) -> Result<(), String> {
 }
 
 // Run the blocking HID work off the UI thread so writes (~1s of frames) never freeze the window.
-#[cfg(windows)]
 async fn blk<T, F>(f: F) -> Result<T, String>
 where
     T: Send + 'static,
@@ -67,49 +72,41 @@ where
         .map_err(|e| e.to_string())
 }
 
-#[cfg(windows)]
 #[tauri::command]
 async fn open() -> Result<hid::CableInfo, String> {
     blk(hid::open).await?
 }
 
-#[cfg(windows)]
 #[tauri::command]
 async fn close() -> Result<(), String> {
     blk(hid::close).await
 }
 
-#[cfg(windows)]
 #[tauri::command]
 async fn read_mode() -> Result<Option<i32>, String> {
     blk(hid::read_mode).await?
 }
 
-#[cfg(windows)]
 #[tauri::command]
 async fn read_bank() -> Result<Vec<hid::Band>, String> {
     blk(hid::read_bank).await?
 }
 
-#[cfg(windows)]
 #[tauri::command]
 async fn set_preset(idx: i32) -> Result<Option<i32>, String> {
     blk(move || hid::set_preset(idx)).await?
 }
 
-#[cfg(windows)]
 #[tauri::command]
 async fn write_bank(bands: Vec<hid::BandIn>, preamp: f64) -> Result<hid::WriteResult, String> {
     blk(move || hid::write_bank(bands, preamp)).await?
 }
 
-#[cfg(windows)]
 #[tauri::command]
 fn win_minimize(window: tauri::WebviewWindow) {
     let _ = window.minimize();
 }
 
-#[cfg(windows)]
 #[tauri::command]
 fn win_close(window: tauri::WebviewWindow) {
     let _ = window.close();

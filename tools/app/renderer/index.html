@@ -101,6 +101,10 @@
     font-size:13px; line-height:1; border:1px solid var(--line); color:var(--muted); display:grid; place-items:center; padding:0; transition:.12s; }
   .winbtn:hover { border-color:var(--accent); color:var(--accent); }
   .winbtn.close:hover { background:var(--danger); color:#fff; border-color:var(--danger); }
+  /* macOS draws real traffic lights in the overlay title bar: clear space for them on
+     the left and drop our own minimise/close, which would otherwise duplicate them. */
+  html.is-mac .titlebar { padding-left:84px; }
+  html.is-mac #minBtn, html.is-mac #closeBtn { display:none; }
 
   /* ---- Body ---- */
   .body { flex:1; min-height:0; display:flex; }
@@ -255,6 +259,10 @@
     border:1px solid var(--line); padding:10px 12px; height:300px; overflow:auto; white-space:pre-wrap; color:var(--muted); user-select:text; }
   .impmsg { font-size:12px; color:var(--muted); }
 </style>
+<script>
+  // Decided before first paint so the title bar never flashes the wrong window buttons.
+  if (/Mac OS X/.test(navigator.userAgent)) document.documentElement.classList.add('is-mac');
+</script>
 </head>
 <body>
 <div class="shell">
