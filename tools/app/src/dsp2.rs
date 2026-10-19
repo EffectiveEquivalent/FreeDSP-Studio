@@ -127,6 +127,7 @@ struct Scheme {
 const PK: &[&str] = &["PK"];
 const SHELVES: &[&str] = &["PK", "LSQ", "HSQ"];
 const LS_PASS: &[&str] = &["PK", "LSQ", "LP", "HP"];
+const SHELVES_PASS: &[&str] = &["PK", "LSQ", "HSQ", "LP", "HP"];
 
 const SCHEMES: &[Scheme] = &[
     Scheme { no: 11, bands: 8, gain: 10.0, types: LS_PASS, pids: &[
@@ -284,6 +285,27 @@ fn profile(vid: u16, pid: u16, product: &str) -> Profile {
             q_min: 0.1,
             q_max: 10.0,
             types: types(SHELVES),
+            preamp: "global".into(),
+            preamp_buffer: 0.0,
+            presets: BTreeMap::new(),
+            custom_slot: 0,
+            family: "Walkplay (scheme 16)".into(),
+            tested: false,
+        },
+        // TRN Black Pearl, Walkplay scheme 16, firmware 0.6. It only shows up on USB with
+        // headphones plugged in. Contour (github.com/Chronosauros/contour) ran this file's write
+        // sequence against one on 2026-10-19: every register and biquad byte read back as sent,
+        // and the bank and the preamp survived unplugging. Low and high pass (codes 4 and 5)
+        // were stored as sent rather than turned into peaks. The bank sits in slot 0, which is
+        // what the cable reports, so it is read rather than assumed, as on the Max.
+        (0x3302, 0x43E8) => Profile {
+            name: if product.is_empty() { "TRN Black Pearl".into() } else { name },
+            bands: 10,
+            gain_min: -10.0,
+            gain_max: 10.0,
+            q_min: 0.1,
+            q_max: 10.0,
+            types: types(SHELVES_PASS),
             preamp: "global".into(),
             preamp_buffer: 0.0,
             presets: BTreeMap::new(),
@@ -799,5 +821,44 @@ mod tests {
         assert_eq!((max.preamp.as_str(), max.preamp_buffer, max.custom_slot), ("global", 0.0, 0));
         assert!(!max.tested);
         assert_eq!(profile(0x3302, 0x43CC, "Protocol Max").name, "Protocol Max");
+    }
+
+    // The Black Pearl gets scheme 16's ten bands and both shelves, plus the pass filters it was
+    // seen to store, and keeps its name with or without the "TE-C" product string.
+    #[test]
+    fn black_pearl_has_its_own_profile() {
+        let bp = profile(0x3302, 0x43E8, "TE-C");
+        assert_eq!(bp.name, "TRN Black Pearl");
+        assert_eq!(profile(0x3302, 0x43E8, "").name, "TRN Black Pearl");
+        assert_eq!((bp.bands, bp.gain_min, bp.gain_max), (10, -10.0, 10.0));
+        assert_eq!(bp.types, ["PK", "LSQ", "HSQ", "LP", "HP"]);
+        assert_eq!((bp.preamp.as_str(), bp.preamp_buffer, bp.custom_slot), ("global", 0.0, 0));
+        assert!(!bp.tested);
+    }
+
+    // Coefficient bytes a TRN Black Pearl (firmware 0.6) held after a write, read back on
+    // 2026-10-19 by Contour, against what `coeffs` makes of the same band. The cable held them
+    // unchanged, also after a replug: a wrapped low-shelf b1, both pass filters, and a cut past
+    // -10 dB.
+    #[test]
+    fn coefficients_match_what_a_black_pearl_stored() {
+        let hex = |s: &str| -> Vec<u8> {
+            s.split(' ').map(|b| u8::from_str_radix(b, 16).unwrap()).collect()
+        };
+        let cases: [(u8, f64, f64, f64, &str); 10] = [
+            (1, 105.0, 6.0, 0.707, "12 21 21 40 41 c5 a0 80 1e 30 3f 3f 31 80 5f 7f 42 f4 9f c0"),
+            (2, 250.0, 10.0, 1.0, "78 3b a2 40 54 6c 9a 80 fa b5 c7 3e ac 93 65 7f 8e 0e 96 c0"),
+            (2, 500.0, -10.4, 0.1, "5c 86 c0 35 a5 96 6a 9d 08 68 e2 2c 5b 69 95 62 9c 11 5d dd"),
+            (2, 1000.0, -10.0, 10.0, "95 3a bf 3f a4 34 03 81 97 51 83 3f 5c cb fc 7e d4 73 bd c0"),
+            (3, 8000.0, 4.0, 0.707, "ae 57 b0 5c 6f 7a 4a 88 93 05 80 29 88 06 dc 48 c8 21 a9 e8"),
+            (4, 18000.0, 0.0, 0.707, "0f 9e f2 0b 1e 3c e5 17 0f 9e f2 0b f0 52 a0 1d d4 34 95 f2"),
+            (5, 30.0, 0.0, 0.707, "ca 43 e9 3f 6c 78 2d 80 ca 43 e9 3f 81 7f d2 7f 5a 70 2d c0"),
+            (2, 3000.0, 2.3, 2.0, "33 85 cb 40 85 75 9a 87 af d9 f5 39 7b 8a 65 78 1e a1 3e c5"),
+            (2, 6000.0, -3.7, 4.0, "ea 69 c2 3e 92 15 5a 90 ce 6d 16 3a 6e ea a5 6f 47 28 27 c7"),
+            (2, 12000.0, 0.0, 0.75, "00 00 00 40 5f d1 7c c2 ea e0 fd 16 a1 2e 83 3d 16 1f 02 e9"),
+        ];
+        for (typ, f, gain, q, stored) in cases {
+            assert_eq!(coeffs(typ, f, gain, q).to_vec(), hex(stored), "type {typ} at {f} Hz");
+        }
     }
 }

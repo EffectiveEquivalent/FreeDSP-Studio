@@ -69,6 +69,8 @@ devicePEQ's "Conexant" handler is this same protocol, so the original FreeDSP an
 
 The CrinEar Protocol Max (`3302:43CC`, 10 bands, ±10 dB, PK / LS / HS) has its own profile but hasn't been tested with this app; [Contour](https://github.com/Chronosauros/contour), an Android EQ app, has driven one on the same limits.
 
+The TRN Black Pearl (`3302:43E8`, "TE-C" over USB, 10 bands, ±10 dB, PK / LS / HS / LPF / HPF) has its own profile as well and hasn't been tested with this app either. Contour ran this app's write sequence against one (firmware 0.6) and read every band register, every coefficient and the preamp back exactly as sent, low and high pass included, also after unplugging it. It only appears on USB with headphones plugged in, so plug them in before Detect.
+
 Untested: Walkplay's chip firmware comes in "schemes" with a fixed band count, gain range and filter set, and a product id belongs to one scheme whatever the brand. The app carries Walkplay's catalogue of about 350 product ids, by way of devicePEQ, across 19 vendor ids (Moondrop, CrinEar, Tanchjim, Truthear, ddHiFi, LETSHUOER, NiceHCK, BGVP, Kiwi Ears and others), and only probes devices on the less specific vendor ids if their descriptor declares report `0x4B`.
 
 | Scheme | Bands | Gain | Filter types |
@@ -203,6 +205,7 @@ If this saved you from the stock app, you can [buy me a coffee](https://buymeaco
 - The TRN Black Pearl (`3302:43E8`, which calls itself "TE-C" over USB) shows by name. It was already driven as a 10-band Walkplay scheme 16 cable
 - The FiiO RETRO NANO is confirmed working on real hardware, so it no longer shows as untested
 ### Unreleased
+- TRN Black Pearl (`3302:43E8`) gets a named profile: 10 bands, ±10 dB, peak, both shelves and low / high pass. Checked by [Contour](https://github.com/Chronosauros/contour) with this app's write sequence: everything read back as sent and survived unplugging. Untested with this app. It doesn't show up on USB at all until headphones are plugged in
 - Fix: FiiO KA15 shelves were too broad and its USER banks 12 dB quiet. Measured on a line input by [Contour](https://github.com/Chronosauros/contour), the KA15 plays a low or high shelf at the stored Q divided by √2, and a USER bank 12 dB below its stored preamp. FiiO's own app writes the raw values too. Shelf Q and preamp are now sent corrected and read back as heard, so a squig.link or AutoEQ profile plays as designed. Banks written before this read back with a lower shelf Q and a preamp 12 dB down, which is what you were actually hearing, and Write all will rewrite them. Rewritten banks come out up to 12 dB louder, at the same level as Close EQ
 - CrinEar Protocol Max (`3302:43CC`) gets a named profile: 10 bands, ±10 dB, peak and both shelves. Untested here
 
